@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { get, list, put, BlobPreconditionFailedError } from "@vercel/blob";
+import { get, head, list, put, BlobNotFoundError, BlobPreconditionFailedError } from "@vercel/blob";
 
 // JSON storage. Private Vercel Blob in production (BLOB_READ_WRITE_TOKEN set), local .data/ otherwise.
 // Every read bypasses the CDN cache so polling sees fresh run state.
@@ -14,9 +14,26 @@ export async function readJson<T>(path: string): Promise<Stored<T> | null> {
     const p = join(LOCAL, path);
     return existsSync(p) ? { data: JSON.parse(readFileSync(p, "utf8")) as T, etag: null } : null;
   }
-  const res = await get(path, { access: "private", useCache: false });
-  if (!res || res.statusCode !== 200) return null;
-  return { data: (await new Response(res.stream).json()) as T, etag: res.blob.etag };
+  // get() can return a weak etag for compressed content, which conditional writes never match.
+  // Take the strong etag from head() on both sides of the read and retry if the blob changed in between.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const before = await headEtag(path);
+    if (!before) return null;
+    const res = await get(path, { access: "private", useCache: false });
+    if (!res || res.statusCode !== 200) return null;
+    const data = (await new Response(res.stream).json()) as T;
+    if ((await headEtag(path)) === before) return { data, etag: before };
+  }
+  throw new Error(`${path} kept changing while being read`);
+}
+
+async function headEtag(path: string): Promise<string | null> {
+  try {
+    return (await head(path)).etag;
+  } catch (err) {
+    if (err instanceof BlobNotFoundError) return null;
+    throw err;
+  }
 }
 
 // ifMatch makes the write conditional: it fails with false if someone else wrote first.
