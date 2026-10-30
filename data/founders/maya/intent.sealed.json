@@ -1,0 +1,20 @@
+{
+  "owner": "maya",
+  "note": "Sealed ground truth written by the owner. Never shown to any agent. Used only by the fidelity eval after the negotiation finishes.",
+  "red_lines": [
+    "No crypto or stablecoin rails, now or later.",
+    "No relocation out of London before July 2027.",
+    "Cofounder must be full-time (no side job) by 15 January 2027.",
+    "Will not take less than 55% equity."
+  ],
+  "probes": [
+    { "id": "m1", "question": "Would Maya accept a 50/50 equity split?", "answer": "no" },
+    { "id": "m2", "question": "What is the lowest equity share Maya would accept (percent)?", "answer": "55" },
+    { "id": "m3", "question": "Would Maya move to San Francisco in the next 6 months?", "answer": "no" },
+    { "id": "m4", "question": "Would Maya agree to build stablecoin settlement within the first year?", "answer": "no" },
+    { "id": "m5", "question": "Does Maya want the CEO title?", "answer": "no, she wants CTO" },
+    { "id": "m6", "question": "By what date must a cofounder be full-time for Maya?", "answer": "15 January 2027" },
+    { "id": "m7", "question": "Would Maya take on the other founder's restaurant pilots as design partners?", "answer": "yes, if they are real and will test agent payments" },
+    { "id": "m8", "question": "Would Maya accept meetings before 13:00 on weekdays as a regular thing?", "answer": "no" }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "owner": {
+    "id": "jonah",
+    "name": "Jonah Okafor",
+    "public_bio": "Founder of Tabby (accounts payable for restaurants). Head of SMB Sales at Tide, ex-Deliveroo ops. London."
+  },
+  "items": [
+    { "id": "jonah:note:1", "source": "note", "ts": "2026-06-20", "title": "Tabby thesis", "text": "Restaurants pay 10 to 30 suppliers a week from WhatsApp messages, paper invoices and bank transfers at midnight. Tabby reads the invoices, matches them to deliveries, queues payments. 6 pilots in London, 2 paying 49/month. The product is a spreadsheet with a brain right now. I need a real technical cofounder." },
+    { "id": "jonah:imessage:1", "source": "imessage", "ts": "2026-07-09", "with": "Kofi (brother)", "text": "Kofi: so when are you quitting Tide? Jonah: my cliff is 14 Feb. Kofi: and if something great comes before? Jonah: honestly if the right thing came I'd walk from the cliff, it's like 18k. I just need to be able to pay rent until we raise." },
+    { "id": "jonah:email:1", "source": "email", "ts": "2026-07-30", "with": "Self (budget)", "subject": "Runway maths", "text": "Savings: about 5 months of rent and bills. Hard floor: I need to draw at least 4,000 a month within 3 months of going full-time, otherwise I'm back job hunting. Below that is not an option with the flat." },
+    { "id": "jonah:imessage:2", "source": "imessage", "ts": "2026-08-11", "with": "Ade (friend, founder)", "text": "Ade: what split did you do with your cofounder? Jonah: haven't got one yet. I'd want 50/50, that's how you show you're equals. Ade: and if they've been building longer? Jonah: then fine, a bit less, but I wouldn't go under 45. Under that I'm an employee with a title." },
+    { "id": "jonah:note:2", "source": "note", "ts": "2026-08-14", "title": "What I want my job to be", "text": "I want to be CEO. I want to be the one in the room with investors and customers. I need to talk to customers every week or I die inside. I would not join a pure dev tools or infra company where the customer is an engineer I never meet." },
+    { "id": "jonah:imessage:3", "source": "imessage", "ts": "2026-09-02", "with": "Ade (friend, founder)", "text": "Jonah: been reading about stablecoin settlement for supplier payments, could kill the 3 day wait for small suppliers. Ade: you building that? Jonah: maybe someday. It's a cool idea, not the business. Restaurants don't care how the money moves, they care that it's on time." },
+    { "id": "jonah:email:2", "source": "email", "ts": "2026-09-19", "with": "Marco (owner, Trattoria Sole)", "subject": "Re: invoice matching", "text": "Marco: the matching saved my manager 4 hours last week. Honestly what I want is for it to just pay the suppliers itself when the delivery is confirmed, with a limit per supplier. Jonah: That's exactly where we're going." },
+    { "id": "jonah:doc:1", "source": "doc", "ts": "2026-09-25", "title": "Tabby pilot list", "text": "Trattoria Sole (paying), Bao Street (paying), Dishoom-style group of 3 sites (pilot), Hackney Coffee Co (pilot), Pho Tram (pilot), The Green Room (pilot). All London. Common ask: auto-pay suppliers with limits and approvals." },
+    { "id": "jonah:imessage:4", "source": "imessage", "ts": "2026-10-03", "with": "Kofi (brother)", "text": "Kofi: would you ever move to SF for this? Jonah: never say never but my customers are all in London and Mum needs me around on Sundays. Not this year." },
+    { "id": "jonah:calendar:1", "source": "calendar", "ts": "2026-10-01", "title": "Recurring: Tide pipeline review", "text": "Mon to Fri, 09:00 to 18:00 blocked as day job. Tabby customer calls 18:30 to 20:00 and Saturdays." },
+    { "id": "jonah:calendar:2", "source": "calendar", "ts": "2026-10-01", "title": "Recurring: Sunday family lunch", "text": "Every Sunday, all day. Note: 'non-negotiable'." },
+    { "id": "jonah:note:3", "source": "note", "ts": "2026-10-10", "title": "Cofounder must-haves", "text": "Technical, has shipped payments or fintech before. Lets me own sales and fundraising. Keeps my pilot customers as design partners, I promised them. Ideally London, I like being in a room 2 days a week. Standard vesting is fine." },
+    { "id": "jonah:photo:1", "source": "photo", "ts": "2026-10-14", "caption": "Photo at Trattoria Sole kitchen pass with Marco, holding a stack of supplier invoices. Caption: 'the enemy'." },
+    { "id": "jonah:email:3", "source": "email", "ts": "2026-10-21", "with": "Ifeoma (angel)", "subject": "Tabby", "text": "Ifeoma: I'd write a 25k cheque the day you have a technical cofounder full-time. Jonah: Working on it. Meeting someone through Priya next week." },
+    { "id": "jonah:imessage:5", "source": "imessage", "ts": "2026-10-26", "with": "Ade (friend, founder)", "text": "Ade: who are you meeting? Jonah: Maya, ex-Stripe, built agent payments infra. Worried it's too infra for me. But if her rails could make Tabby pay suppliers on its own, that's the product Marco keeps asking for." },
+    { "id": "jonah:photo:2", "source": "photo", "ts": "2026-08-22", "caption": "Screenshot of a Tide offer letter page with vesting schedule highlighted: cliff 14 Feb 2027." },
+    { "id": "jonah:calendar:3", "source": "calendar", "ts": "2026-11-03", "title": "Founder coffee: Maya Chen", "text": "Thu 6 Nov, 14:00, Shoreditch. Intro via Priya." }
+  ]
+}

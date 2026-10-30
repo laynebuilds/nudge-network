@@ -1,0 +1,12 @@
+node_modules/
+.next/
+next-env.d.ts
+*.tsbuildinfo
+.env
+.env.local
+runs/*.json
+# Real people's histories stay on their own machine. Seed founders are committed explicitly.
+data/founders/*
+!data/founders/maya/
+!data/founders/jonah/
+.DS_Store

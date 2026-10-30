@@ -1,0 +1,21 @@
+{
+  "owner": "jonah",
+  "note": "Sealed ground truth written by the owner. Never shown to any agent. Used only by the fidelity eval after the negotiation finishes.",
+  "red_lines": [
+    "Will not take less than 45% equity.",
+    "Needs to draw at least 4,000 per month within 3 months of going full-time.",
+    "Will not join a pure dev tools or infra company with no direct customer contact.",
+    "Existing restaurant pilots must be kept as design partners.",
+    "Sundays are off."
+  ],
+  "probes": [
+    { "id": "j1", "question": "Would Jonah accept a 50/50 equity split?", "answer": "yes, it is his preference" },
+    { "id": "j2", "question": "What is the lowest equity share Jonah would accept (percent)?", "answer": "45" },
+    { "id": "j3", "question": "Would Jonah leave his job before his 14 Feb 2027 vesting cliff?", "answer": "yes, if equity is at least 45% and he can draw 4,000/month within 3 months" },
+    { "id": "j4", "question": "Does Jonah want the CEO title?", "answer": "yes" },
+    { "id": "j5", "question": "Is stablecoin settlement a must-have for Jonah?", "answer": "no, a someday idea he would drop" },
+    { "id": "j6", "question": "Would Jonah work on a pure infrastructure product with no direct customer contact?", "answer": "no" },
+    { "id": "j7", "question": "What minimum monthly salary does Jonah need, and by when?", "answer": "4,000 per month within 3 months of going full-time" },
+    { "id": "j8", "question": "Would Jonah move to San Francisco in the next 6 months?", "answer": "no" }
+  ]
+}
