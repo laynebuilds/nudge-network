@@ -1,10 +1,11 @@
 // Build a founder's digital history from their own Mac, using Nudge (github.com/jasnoorkaur111/imessage-mcp)
 // as the reader for iMessage and Apple Mail. Runs locally; nothing leaves the machine.
 //
-// NUDGE_PATH=~/imessage-mcp node scripts/ingest-nudge.mjs --id maya --name "Maya Chen" --bio "..." --days 90
+// npm run ingest:nudge -- --id layne --contacts "Jasnoor,Kai" --days 90
+// then review .data/ingest/layne.json and push it with npm run upload.
 //
-// Needs Node 22.5+ (node:sqlite) and Full Disk Access for the terminal. Review the output before using it:
-// the file contains real messages. data/founders/*/history.json from real people is gitignored.
+// Needs Node 22.5+ (node:sqlite) and Full Disk Access for the terminal. The output contains real messages
+// and stays in .data/ (gitignored) until you upload it.
 import { parseArgs } from "node:util";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -14,15 +15,14 @@ import { pathToFileURL } from "node:url";
 const { values } = parseArgs({
   options: {
     id: { type: "string" },
-    name: { type: "string" },
-    bio: { type: "string", default: "" },
+    contacts: { type: "string", default: "" },
     days: { type: "string", default: "90" },
     perChat: { type: "string", default: "40" },
     mailDays: { type: "string", default: "90" },
   },
 });
-if (!values.id || !values.name) {
-  console.error("Usage: --id <slug> --name <full name> [--bio text] [--days 90]");
+if (!values.id) {
+  console.error('Usage: --id <your-id> [--contacts "Name One,Name Two"] [--days 90]');
   process.exit(1);
 }
 
@@ -30,9 +30,11 @@ const nudge = resolve((process.env.NUDGE_PATH ?? join(homedir(), "imessage-mcp")
 const lib = await import(pathToFileURL(join(nudge, "lib.mjs")).href);
 const days = Number(values.days);
 const items = [];
+const only = values.contacts.split(",").map((c) => c.trim().toLowerCase()).filter(Boolean);
+const wanted = (name) => !only.length || only.some((c) => String(name ?? "").toLowerCase().includes(c));
 
 for (const { conv, msgs } of lib.recentByConv(days, Number(values.perChat))) {
-  if (conv.automated || !conv.inContacts) continue;
+  if (conv.automated || !conv.inContacts || !wanted(conv.name)) continue;
   const ordered = [...msgs].reverse();
   const text = ordered.map((m) => `${m.fromMe ? "Me" : conv.isGroup ? lib.who(m.sender) : conv.name}: ${lib.msgText(m)}`).join("\n");
   if (!text.trim()) continue;
@@ -49,7 +51,7 @@ try {
   const mail = await import(pathToFileURL(join(nudge, "mail.mjs")).href);
   if (mail.mailAvailable()) {
     for (const m of mail.mailSorted(Number(values.mailDays), 200)) {
-      if (!["request", "person"].includes(m.kind)) continue;
+      if (!["request", "person"].includes(m.kind) || !wanted(`${m.from} ${m.email}`)) continue;
       items.push({
         id: `${values.id}:email:${m.id.replace(/^mail:/, "")}`,
         source: "email",
@@ -64,9 +66,9 @@ try {
   console.warn(`Apple Mail skipped: ${err.message}`);
 }
 
-const dir = join(process.cwd(), "data", "founders", values.id);
+const dir = join(process.cwd(), ".data", "ingest");
 mkdirSync(dir, { recursive: true });
-const out = { owner: { id: values.id, name: values.name, public_bio: values.bio }, items };
-writeFileSync(join(dir, "history.json"), JSON.stringify(out, null, 2));
-console.log(`Wrote ${items.length} items to ${join(dir, "history.json")}.`);
-console.log("Next: write intent.sealed.json in the same folder (red lines + probe answers) without showing it to the twin.");
+const file = join(dir, `${values.id}.json`);
+writeFileSync(file, JSON.stringify({ items }, null, 2));
+console.log(`Wrote ${items.length} items to ${file}. Read it, delete anything you do not want your twin to know, then:`);
+console.log(`NUDGE_TOKEN=... npm run upload -- --file ${file} --url https://<your deployment>`);

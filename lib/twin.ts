@@ -23,35 +23,28 @@ ${name}'s history:
 ${renderHistory(owner)}`;
 }
 
-export class Twin {
-  history: Turn[] = [];
-  constructor(
-    public owner: Founder,
-    public system: string
-  ) {}
+// One negotiation move. history is the twin's own conversation so far and is appended to in place.
+export async function twinSpeak(system: string, history: Turn[], incoming: string): Promise<TwinTurn> {
+  history.push({ role: "user", content: incoming });
+  const { data, assistant } = await ask({ system, messages: history, schema: TwinTurn });
+  history.push(assistant);
+  return data;
+}
 
-  async speak(incoming: string): Promise<TwinTurn> {
-    this.history.push({ role: "user", content: incoming });
-    const { data, assistant } = await ask({ system: this.system, messages: this.history, schema: TwinTurn });
-    this.history.push(assistant);
-    return data;
-  }
-
-  // Twin checks the mediator's proposal against what it knows of its owner.
-  async ratify(outcome: Outcome, side: "a" | "b"): Promise<Ratification> {
-    const { data } = await ask({
-      system: this.system,
-      messages: [
-        ...this.history,
-        {
-          role: "user",
-          content: `[Mediator] Here is the proposed outcome. You are side "${side}". Endorse it only if ${this.owner.owner.name} would sign it as written. List concrete objections otherwise, with evidence ids.\n\n${JSON.stringify(outcome, null, 2)}`,
-        },
-      ],
-      schema: Ratification,
-    });
-    return data;
-  }
+// The twin checks the mediator's proposal against what it knows of its owner.
+export async function twinRatify(system: string, history: Turn[], ownerName: string, outcome: Outcome, side: "a" | "b"): Promise<Ratification> {
+  const { data } = await ask({
+    system,
+    messages: [
+      ...history,
+      {
+        role: "user",
+        content: `[Mediator] Here is the proposed outcome. You are side "${side}". Endorse it only if ${ownerName} would sign it as written. List concrete objections otherwise, with evidence ids.\n\n${JSON.stringify(outcome, null, 2)}`,
+      },
+    ],
+    schema: Ratification,
+  });
+  return data;
 }
 
 // Blind prediction of the owner's sealed answers. mode "baseline" sees only the public bio,

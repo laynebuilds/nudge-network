@@ -1,34 +1,49 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
-import type { Run } from "../../../lib/runs";
+import { use, useEffect, useRef, useState } from "react";
+import type { RunView } from "../../../lib/runs";
 
 const STAGES = ["negotiating", "mediating", "ratifying", "scoring", "done"];
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
 export default function RunPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [run, setRun] = useState<Run | null>(null);
-  const [view, setView] = useState<string>("judges");
+  const [run, setRun] = useState<RunView | null>(null);
+  const [error, setError] = useState("");
+  const alive = useRef(true);
 
+  // While this page is open it drives the run: each POST advances one step on the server.
   useEffect(() => {
-    let alive = true;
-    const tick = async () => {
-      const res = await fetch(`/api/runs/${id}`, { cache: "no-store" });
-      if (!res.ok || !alive) return;
-      const r = (await res.json()) as Run;
-      setRun(r);
-      if (r.stage !== "done" && r.stage !== "error") setTimeout(tick, 2000);
+    alive.current = true;
+    const loop = async () => {
+      const first = await fetch(`/api/runs/${id}`, { cache: "no-store" });
+      const body = await first.json();
+      if (!first.ok) return setError(body.error);
+      setRun(body);
+      let current = body as RunView;
+      while (alive.current && current.stage !== "done" && current.stage !== "error") {
+        const res = await fetch(`/api/runs/${id}/step`, { method: "POST" });
+        if (!res.ok) {
+          await new Promise((r) => setTimeout(r, 4000));
+          continue;
+        }
+        current = await res.json();
+        if (alive.current) setRun(current);
+        await new Promise((r) => setTimeout(r, 1500));
+      }
     };
-    tick();
+    loop();
     return () => {
-      alive = false;
+      alive.current = false;
     };
   }, [id]);
 
+  if (error) return <section className="card"><p className="error">{error}</p></section>;
   if (!run) return <p className="muted">Loading...</p>;
-  const sideOf = (owner: string) => (owner === run.a.id ? "a" : "b");
-  const o = run.result?.outcome;
+  const name = (s: "a" | "b") => (s === "a" ? run.a.name : run.b.name);
+  const o = run.outcome;
+  // Without auth (local demo) there is no signed-in founder, so both decision boxes show.
+  const deciders = run.party ? [run.party === "a" ? run.a : run.b] : [run.a, run.b];
 
   return (
     <>
@@ -43,22 +58,17 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
               {s}
             </span>
           ))}
-          {run.stage === "revising" && <span className="pill on">revising after objections</span>}
+          {run.revised && <span className="pill">revised once after objections</span>}
         </div>
         {run.error && <p className="error">{run.error}</p>}
-        <div className="tabs">
-          {[run.a, run.b].map((f) => (
-            <button key={f.id} className={view === f.id ? "active" : ""} onClick={() => setView(f.id)}>
-              View as {f.name}
-            </button>
-          ))}
-          <button className={view === "judges" ? "active" : ""} onClick={() => setView("judges")}>
-            Judges view
-          </button>
-        </div>
+        {!run.full && run.party && (
+          <p className="muted">
+            You see your own twin&apos;s reasoning and scorecard. Everything else opens up once you have both decided.
+          </p>
+        )}
       </section>
 
-      {o && run.result && (
+      {o && run.stage !== "mediating" && (
         <section className="card">
           <span className={`pill verdict ${o.verdict}`}>{o.verdict.replace("_", " ")}</span>
           <h2>{o.headline}</h2>
@@ -75,92 +85,90 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
           <h3>Why</h3>
           <p>{o.reasoning}</p>
           <div className="pair">
-            <div>
-              <h3>{run.a.name} gains</h3>
-              <ul>{o.gains.a.map((g) => <li key={g}>{g}</li>)}</ul>
-            </div>
-            <div>
-              <h3>{run.b.name} gains</h3>
-              <ul>{o.gains.b.map((g) => <li key={g}>{g}</li>)}</ul>
-            </div>
+            {(["a", "b"] as const).map((s) => (
+              <div key={s}>
+                <h3>{name(s)} gains</h3>
+                <ul>{o.gains[s].map((g) => <li key={g}>{g}</li>)}</ul>
+              </div>
+            ))}
           </div>
           <h3>Constraints the twins held</h3>
           <ul>
             {o.constraints_respected.map((c, i) => (
               <li key={i}>
-                <b>{c.owner === "a" ? run.a.name : run.b.name}:</b> {c.constraint} <span className="muted">({c.how})</span>
+                <b>{name(c.owner)}:</b> {c.constraint} <span className="muted">({c.how})</span>
               </li>
             ))}
           </ul>
           <h3>Needs a human</h3>
           <ul>
-            {o.unresolved
-              .filter((u) => view === "judges" || u.for_owner === "both" || u.for_owner === sideOf(view))
-              .map((u, i) => (
-                <li key={i}>
-                  {u.question} <span className="muted">({u.why})</span>
-                </li>
-              ))}
+            {o.unresolved.map((u, i) => (
+              <li key={i}>
+                {u.for_owner !== "both" && <b>{name(u.for_owner)}: </b>}
+                {u.question} <span className="muted">({u.why})</span>
+              </li>
+            ))}
           </ul>
-          <h3>Twin ratification{run.result.revised ? " (after one revision)" : ""}</h3>
-          <ul>
-            {(["a", "b"] as const).map((s) => {
-              const r = run.result!.ratifications[s];
-              return (
-                <li key={s}>
-                  <b>{s === "a" ? run.a.name : run.b.name}&apos;s twin:</b> {r.endorse ? "endorses" : "objects"}
-                  {r.objections.length > 0 && <span className="muted"> ({r.objections.join("; ")})</span>}
-                </li>
-              );
-            })}
-          </ul>
-          {view !== "judges" && <DecisionBox run={run} owner={view} onSaved={setRun} />}
-          {view === "judges" && (
-            <p className="muted">
-              Founder decisions:{" "}
-              {[run.a, run.b].map((f) => `${f.name}: ${run.decisions[f.id]?.decision ?? "pending"}`).join(", ")}
-            </p>
+          {run.ratifications && (
+            <>
+              <h3>Twin check</h3>
+              <ul>
+                {(["a", "b"] as const)
+                  .filter((s) => run.ratifications?.[s])
+                  .map((s) => {
+                    const r = run.ratifications![s];
+                    return (
+                      <li key={s}>
+                        <b>{name(s)}&apos;s twin:</b> {r.endorse ? "endorses" : "objects"}
+                        {r.objections.length > 0 && <span className="muted"> ({r.objections.join("; ")})</span>}
+                      </li>
+                    );
+                  })}
+              </ul>
+            </>
           )}
+          {run.stage === "done" &&
+            deciders.map((f) => <DecisionBox key={f.id} runId={run.id} owner={f} existing={run.decisions[f.id]} onSaved={setRun} />)}
+          <p className="muted">
+            Decisions: {[run.a, run.b].map((f) => `${f.name} ${run.decisions[f.id]?.decision ?? "pending"}`).join(", ")}
+          </p>
         </section>
       )}
 
-      {view === "judges" && run.fidelity && <Scorecard run={run} />}
+      {run.fidelity && <Scorecard run={run} />}
 
       <section className="card">
         <h2>Conversation</h2>
-        {run.transcript.length === 0 && <p className="muted">The twins are getting started.</p>}
-        {run.transcript.map((e, i) => {
-          const mine = view === "judges" || sideOf(view) === e.side;
-          return (
-            <div key={i} className={`bubble ${e.side}`}>
-              <div className="who">
-                {e.speaker}&apos;s twin <span className={`pill ${e.turn.status}`}>{e.turn.status}</span>
-              </div>
-              <p>{e.turn.message}</p>
-              {mine && (
-                <details>
-                  <summary>Private reasoning and evidence</summary>
-                  <p className="muted">{e.turn.private_reasoning}</p>
-                  <p className="evidence">{e.turn.evidence.join("  ") || "no evidence cited"}</p>
-                  {e.turn.owner_questions.length > 0 && <p>Would ask owner: {e.turn.owner_questions.join(" / ")}</p>}
-                </details>
-              )}
+        {run.transcript.length === 0 && <p className="muted">The twins are getting started. Keep this page open.</p>}
+        {run.transcript.map((e, i) => (
+          <div key={i} className={`bubble ${e.side}`}>
+            <div className="who">
+              {e.speaker}&apos;s twin <span className={`pill ${e.turn.status}`}>{e.turn.status}</span>
             </div>
-          );
-        })}
+            <p>{e.turn.message}</p>
+            {e.turn.private_reasoning && (
+              <details>
+                <summary>Private reasoning and evidence</summary>
+                <p className="muted">{e.turn.private_reasoning}</p>
+                <p className="evidence">{e.turn.evidence.join("  ") || "no evidence cited"}</p>
+                {e.turn.owner_questions.length > 0 && <p>Would ask owner: {e.turn.owner_questions.join(" / ")}</p>}
+              </details>
+            )}
+          </div>
+        ))}
+        {run.stage === "negotiating" && <p className="muted">Next twin is thinking...</p>}
       </section>
     </>
   );
 }
 
-function Scorecard({ run }: { run: Run }) {
+function Scorecard({ run }: { run: RunView }) {
   const f = run.fidelity!;
   return (
     <section className="card">
       <h2>Do the twins understand their owners?</h2>
       <p className="muted">
-        Scored against each founder&apos;s sealed intent file, which no agent saw. Baseline is the same model given only the
-        public bio.
+        Scored against each founder&apos;s sealed intent, which no agent saw. Baseline is the same model given only the public bio.
       </p>
       <div className="stats">
         <div><b>{pct(f.summary.twinAccuracy)}</b><span>twin probe accuracy</span></div>
@@ -174,6 +182,7 @@ function Scorecard({ run }: { run: Run }) {
           {f.redLines.violations.map((v, i) => <li key={i}>{v.owner}: {v.red_line} ({v.how})</li>)}
         </ul>
       )}
+      <p className="muted">{f.redLines.notes}</p>
       {f.owners.map((o) => (
         <details key={o.owner}>
           <summary>
@@ -202,14 +211,23 @@ function Scorecard({ run }: { run: Run }) {
   );
 }
 
-function DecisionBox({ run, owner, onSaved }: { run: Run; owner: string; onSaved: (r: Run) => void }) {
-  const existing = run.decisions[owner];
+function DecisionBox({
+  runId,
+  owner,
+  existing,
+  onSaved,
+}: {
+  runId: string;
+  owner: { id: string; name: string };
+  existing?: { decision: string; note: string };
+  onSaved: (r: RunView) => void;
+}) {
   const [note, setNote] = useState(existing?.note ?? "");
   const [error, setError] = useState("");
 
   async function decide(decision: "accept" | "reject" | "modify") {
     setError("");
-    const res = await fetch(`/api/runs/${run.id}/decision`, { method: "POST", body: JSON.stringify({ owner, decision, note }) });
+    const res = await fetch(`/api/runs/${runId}/decision`, { method: "POST", body: JSON.stringify({ owner: owner.id, decision, note }) });
     const body = await res.json();
     if (!res.ok) setError(body.error);
     else onSaved(body);
@@ -217,8 +235,8 @@ function DecisionBox({ run, owner, onSaved }: { run: Run; owner: string; onSaved
 
   return (
     <div className="decision">
-      <h3>Your call</h3>
-      {existing && <p className="muted">You chose {existing.decision}. You can change it.</p>}
+      <h3>{owner.name}&apos;s call</h3>
+      {existing && <p className="muted">Chose {existing.decision}. You can change it.</p>}
       <textarea rows={2} placeholder="Anything you would change (needed for modify)" value={note} onChange={(e) => setNote(e.target.value)} />
       <div className="row">
         <button onClick={() => decide("accept")}>Accept</button>

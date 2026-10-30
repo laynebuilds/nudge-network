@@ -10,7 +10,7 @@ import { ProbeGrades, type SealedIntent, type Predictions } from "../lib/schemas
 const { values } = parseArgs({
   options: { owners: { type: "string" }, repeats: { type: "string", default: "1" } },
 });
-const owners = values.owners?.split(",") ?? listFounders().map((f) => f.id);
+const owners = values.owners?.split(",") ?? (await listFounders()).map((f) => f.id);
 const repeats = Number(values.repeats);
 
 async function grade(sealed: SealedIntent, preds: Predictions) {
@@ -32,12 +32,12 @@ async function grade(sealed: SealedIntent, preds: Predictions) {
 }
 
 for (const id of owners) {
-  const sealed = loadSealed(id);
+  const sealed = await loadSealed(id);
   if (!sealed) {
     console.log(`${id}: no intent.sealed.json, skipping`);
     continue;
   }
-  const f = loadFounder(id);
+  const f = await loadFounder(id);
   const score = { twin: 0, baseline: 0, n: 0 };
   const misses = new Map<string, number>();
   for (let r = 0; r < repeats; r++) {

@@ -1,63 +1,78 @@
-import { ask } from "./claude";
+import { ask, type Turn } from "./claude";
 import { Outcome, type Founder, type Ratification, type TwinTurn } from "./schemas";
-import { Twin, twinSystem } from "./twin";
+import { twinRatify, twinSpeak, twinSystem } from "./twin";
 
 export type TranscriptEntry = { side: "a" | "b"; speaker: string; turn: TwinTurn };
 
-export type NegotiationResult = {
+export type Stage = "negotiating" | "mediating" | "ratifying" | "scoring" | "done" | "error";
+
+// Everything the pipeline needs to resume from any step. Persisted between requests so each request
+// does one model call (or one parallel batch) and stays well inside serverless time limits.
+export type NegotiationState = {
+  goal: string;
+  founders: { a: Founder; b: Founder };
+  stage: Stage;
+  histories: { a: Turn[]; b: Turn[] };
   transcript: TranscriptEntry[];
-  outcome: Outcome;
-  ratifications: { a: Ratification; b: Ratification };
+  outcome?: Outcome;
+  ratifications?: { a: Ratification; b: Ratification };
   revised: boolean;
 };
 
-type Hooks = {
-  onTurn?: (e: TranscriptEntry) => void | Promise<void>;
-  onStage?: (stage: string) => void | Promise<void>;
-};
+export const MAX_TURNS = Number(process.env.NUDGE_MAX_TURNS ?? 12);
 
-const MAX_TURNS = Number(process.env.NUDGE_MAX_TURNS ?? 12);
+const systems = (s: NegotiationState) => ({
+  a: twinSystem(s.founders.a, s.founders.b.owner.name, s.goal),
+  b: twinSystem(s.founders.b, s.founders.a.owner.name, s.goal),
+});
 
-export async function negotiate(a: Founder, b: Founder, goal: string, hooks: Hooks = {}): Promise<NegotiationResult> {
-  const twins = {
-    a: new Twin(a, twinSystem(a, b.owner.name, goal)),
-    b: new Twin(b, twinSystem(b, a.owner.name, goal)),
-  };
-  const transcript: TranscriptEntry[] = [];
-  const last: Partial<Record<"a" | "b", TwinTurn>> = {};
+export function initialState(a: Founder, b: Founder, goal: string): NegotiationState {
+  return { goal, founders: { a, b }, stage: "negotiating", histories: { a: [], b: [] }, transcript: [], revised: false };
+}
 
-  await hooks.onStage?.("negotiating");
-  let incoming = `[System] You speak first. Open the conversation with the twin of ${b.owner.name}.`;
-  for (let i = 0; i < MAX_TURNS; i++) {
+// Advance one step. Returns once the state has moved forward; "scoring" is left to the caller.
+export async function advance(s: NegotiationState): Promise<void> {
+  const sys = systems(s);
+  const { a, b } = s.founders;
+
+  if (s.stage === "negotiating") {
+    const i = s.transcript.length;
     const side = i % 2 === 0 ? "a" : "b";
-    const turn = await twins[side].speak(incoming);
-    const entry = { side, speaker: twins[side].owner.owner.name, turn } as TranscriptEntry;
-    transcript.push(entry);
-    last[side] = turn;
-    await hooks.onTurn?.(entry);
+    const prev = s.transcript.at(-1);
+    let incoming = prev
+      ? `[Twin of ${prev.speaker}] ${prev.turn.message}${prev.turn.status === "ready" ? "\n(They marked themselves ready to propose on the current terms.)" : ""}`
+      : `[System] You speak first. Open the conversation with the twin of ${b.owner.name}.`;
+    if (i >= MAX_TURNS - 2) incoming += "\n[System] This is your final turn. Set status to ready or walk_away.";
 
-    if (turn.status === "walk_away") break;
-    if (last.a?.status === "ready" && last.b?.status === "ready") break;
-    incoming = `[Twin of ${twins[side].owner.owner.name}] ${turn.message}${
-      turn.status === "ready" ? "\n(They marked themselves ready to propose on the current terms.)" : ""
-    }`;
-    if (i === MAX_TURNS - 2) incoming += "\n[System] This is your final turn. Set status to ready or walk_away.";
+    const turn = await twinSpeak(sys[side], s.histories[side], incoming);
+    s.transcript.push({ side, speaker: s.founders[side].owner.name, turn });
+
+    const last = (x: "a" | "b") => s.transcript.filter((e) => e.side === x).at(-1)?.turn.status;
+    if (turn.status === "walk_away" || (last("a") === "ready" && last("b") === "ready") || s.transcript.length >= MAX_TURNS) {
+      s.stage = "mediating";
+    }
+    return;
   }
 
-  await hooks.onStage?.("mediating");
-  let outcome = await mediate(a, b, goal, transcript);
-
-  await hooks.onStage?.("ratifying");
-  let ratifications = { a: await twins.a.ratify(outcome, "a"), b: await twins.b.ratify(outcome, "b") };
-  let revised = false;
-
-  if (!ratifications.a.endorse || !ratifications.b.endorse) {
-    await hooks.onStage?.("revising");
-    outcome = await mediate(a, b, goal, transcript, ratifications);
-    ratifications = { a: await twins.a.ratify(outcome, "a"), b: await twins.b.ratify(outcome, "b") };
-    revised = true;
+  if (s.stage === "mediating") {
+    s.outcome = await mediate(a, b, s.goal, s.transcript, s.revised ? s.ratifications : undefined);
+    s.stage = "ratifying";
+    return;
   }
-  return { transcript, outcome, ratifications, revised };
+
+  if (s.stage === "ratifying") {
+    const [ra, rb] = await Promise.all([
+      twinRatify(sys.a, s.histories.a, a.owner.name, s.outcome!, "a"),
+      twinRatify(sys.b, s.histories.b, b.owner.name, s.outcome!, "b"),
+    ]);
+    s.ratifications = { a: ra, b: rb };
+    if ((!ra.endorse || !rb.endorse) && !s.revised) {
+      s.revised = true;
+      s.stage = "mediating";
+    } else {
+      s.stage = "scoring";
+    }
+  }
 }
 
 // The mediator never sees either history or private reasoning: only what the twins said to each other

@@ -12,6 +12,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <header className="top">
           <a href="/" className="brand">Nudge Network</a>
+          <a href="/me" className="muted">Your twin</a>
           <span className="muted">twins negotiate, humans decide</span>
         </header>
         <main>{children}</main>

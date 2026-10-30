@@ -34,42 +34,37 @@ sealed intent (A, B) ───────────────────�
 - **Ratification**: each twin checks the proposal against its owner. If either objects, the mediator revises once, then the twins check again.
 - **Fidelity** (`lib/fidelity.ts`) scores everything against the sealed files.
 
-## Seed scenario
+## Your twin: plug in your life
 
-Two fictional London founders in `data/founders/`:
+Each person signs in with a private invite link and builds their twin at `/me`:
 
-- **Maya Chen**: ex-Stripe, building Ledgerline (payment rails for AI agents). Needs a commercial cofounder full-time by 15 Jan, will not touch crypto, will not move before July, never wants to be CEO again, will not go below 55%.
-- **Jonah Okafor**: Head of SMB Sales at Tide, building Tabby (AP for restaurants) with 6 pilots. Wants CEO and 50/50, will not go below 45%, needs 4k/month within 3 months, will walk from his Feb cliff for the right thing, will not do pure infra.
+- **Messaging.** WhatsApp: Export chat (without media), upload the .zip or .txt. iMessage and Apple Mail on a Mac: [Nudge](https://github.com/jasnoorkaur111/imessage-mcp) reads them locally, you review the file, then upload only what you keep.
+- **Photo gallery.** Pick photos from your phone or Mac. They are resized in the browser, Claude writes a short note on what each one says about your life (places, work, routines, people by relationship), and only the notes are kept. Images are never stored.
+- **Notes.** Paste anything else: a thread, a plan, a decision you made.
+- **Sealed intent.** Your red lines and your honest answers to probe questions. Only you see it; it is how the scorecard checks your twin.
 
-None of that is stated plainly to the twins. It is scattered across texts with a sibling, an email to an investor, a whiteboard photo with "NO CRYPTO" circled, a calendar block, a budget note. The overlap (55/45, Jonah as CEO, Maya as CTO, restaurant AP agents on Ledgerline rails, Jonah full-time in January) is findable but only if the twins actually read their owners well.
+Real histories never go in git. They live in a private Vercel Blob store. `data/founders/` holds only public facts and the demo pair.
+
+Privacy in a run: until both people have decided, each sees only their own twin's private reasoning, their own open questions and their own scorecard. Everything opens up once both have decided.
+
+## Demo pair
+
+Two fictional London founders, Maya (technical, agent payments, ex-Stripe) and Jonah (sales, restaurant accounts payable), with constraints scattered across texts, emails, a whiteboard photo and calendars. On the first full run the twins found 55/45, Jonah CEO and Maya CTO, fiat only and a 15 January start. Results: 0 red line violations, 88% probe accuracy vs a 38% bio-only baseline, 100% of citations resolving.
 
 ## Run it
 
 ```bash
 npm install
-cp .env.example .env.local   # set ANTHROPIC_API_KEY
-npm run dev                  # http://localhost:3000
-```
-
-From the terminal:
-
-```bash
-npm run negotiate                        # Maya x Jonah, full pipeline, saves runs/<id>.json
-npm run negotiate -- --a maya --b jonah --goal "Could we share one sales hire?"
+cp .env.example .env.local   # ANTHROPIC_API_KEY; FOUNDER_TOKENS and BLOB_READ_WRITE_TOKEN for the hosted setup
+npm run dev                  # http://localhost:3000 (no FOUNDER_TOKENS = local admin, no sign-in)
+npm run negotiate                        # demo pair, full pipeline in the terminal
+npm run negotiate -- --a layne --b jasnoor
 npm run eval -- --repeats 3              # probe accuracy only, twin vs bio-only baseline
+npm run ingest:nudge -- --id layne --contacts "Jasnoor" --days 90
+NUDGE_TOKEN=... npm run upload -- --file .data/ingest/layne.json --url https://<deployment>
 ```
 
-Open `/runs/<id>` and switch between **View as Maya**, **View as Jonah** (each sees only their own twin's private reasoning and their own open questions, and can accept / reject / modify) and **Judges view** (everything plus the fidelity scorecard).
-
-## Real histories with Nudge
-
-[Nudge](https://github.com/jasnoorkaur111/imessage-mcp) already reads iMessage and Apple Mail locally on a Mac. `scripts/ingest-nudge.mjs` uses it to build a founder's history file:
-
-```bash
-NUDGE_PATH=~/imessage-mcp npm run ingest:nudge -- --id jas --name "Your Name" --bio "One line public bio" --days 90
-```
-
-Needs Node 22.5+ and Full Disk Access for the terminal. Everything stays on the machine, and real histories under `data/founders/` are gitignored (only the two seed founders are committed). Then write `intent.sealed.json` next to it, by hand, without showing it to the twin.
+Runs advance one model step per request (the open run page drives them), so nothing hits serverless time limits. A lease with a conditional Blob write stops two viewers from stepping the same run at once.
 
 ## Layout
 
@@ -79,7 +74,10 @@ data/founders/<id>/intent.sealed.json  red lines + probe answers, scorer only
 lib/twin.ts         twin prompt, negotiation turn, ratification, probe prediction
 lib/negotiate.ts    turn loop, mediator, ratify and revise
 lib/fidelity.ts     probe grading, baseline ablation, red line audit, grounding
-lib/runs.ts         run lifecycle, persisted to runs/<id>.json
+lib/runs.ts         run lifecycle, stepping, per-viewer redaction
+lib/store.ts        private Vercel Blob (or .data/ locally)
+lib/auth.ts         invite-link sign-in
+lib/whatsapp.ts     WhatsApp export parser
 app/                Next.js reveal UI and API
 scripts/            negotiate and eval CLIs, Nudge ingest
 ```

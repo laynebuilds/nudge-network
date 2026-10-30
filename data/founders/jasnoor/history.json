@@ -1,0 +1,14 @@
+{
+  "owner": {
+    "id": "jasnoor",
+    "name": "Jasnoor Kaur",
+    "public_bio": "Founder of SoinsAI, working on obeofit. Builds personal AI tools: Nudge, Orbit, Roster. San Francisco."
+  },
+  "items": [
+    { "id": "jasnoor:doc:soinsai", "source": "doc", "ts": "2026-10-01", "title": "Public: GitHub profile", "text": "Founder of SoinsAI and working on obeofit (obeofit.com). Based in San Francisco. Around 1,450 GitHub contributions in the last year." },
+    { "id": "jasnoor:doc:nudge", "source": "doc", "ts": "2026-10-01", "title": "Public: Nudge (imessage-mcp)", "text": "Nudge is a local 'Superhuman for iMessage': a Mac menu bar app plus an MCP server that lets Claude read your texts and Apple Mail, tell you who is waiting on you, track promises you made, draft replies and write morning and night recaps. Everything runs on the user's Mac." },
+    { "id": "jasnoor:doc:orbit", "source": "doc", "ts": "2026-10-01", "title": "Public: Orbit Personal CRM", "text": "Open-source, voice-first personal CRM with an interactive relationship graph, calendar and email sync, and AI relationship intelligence. TypeScript." },
+    { "id": "jasnoor:doc:roster", "source": "doc", "ts": "2026-10-01", "title": "Public: Roster", "text": "Pulls your Luma events, researches every guest, and picks the ten people to find in the room. JavaScript." },
+    { "id": "jasnoor:doc:hackathon", "source": "doc", "ts": "2026-10-30", "title": "Hackathon: Nudge Network", "text": "Building Nudge Network with Layne: two people's digital twins negotiate something valuable, and a sealed-intent eval checks the twins actually act like their owners." }
+  ]
+}

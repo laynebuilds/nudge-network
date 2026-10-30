@@ -3,12 +3,22 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type F = { id: string; name: string; public_bio: string };
+type F = { id: string; name: string; demo: boolean };
 
-export default function StartForm({ founders, defaultGoal }: { founders: F[]; defaultGoal: string }) {
+export default function StartForm({
+  founders,
+  defaultA,
+  defaultB,
+  defaultGoal,
+}: {
+  founders: F[];
+  defaultA: string;
+  defaultB: string;
+  defaultGoal: string;
+}) {
   const router = useRouter();
-  const [a, setA] = useState(founders[0]?.id ?? "");
-  const [b, setB] = useState(founders[1]?.id ?? "");
+  const [a, setA] = useState(defaultA);
+  const [b, setB] = useState(defaultB);
   const [goal, setGoal] = useState(defaultGoal);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -31,6 +41,7 @@ export default function StartForm({ founders, defaultGoal }: { founders: F[]; de
       {founders.map((f) => (
         <option key={f.id} value={f.id}>
           {f.name}
+          {f.demo ? " (demo)" : ""}
         </option>
       ))}
     </select>
@@ -39,8 +50,8 @@ export default function StartForm({ founders, defaultGoal }: { founders: F[]; de
   return (
     <div className="form">
       <div className="pair">
-        <label>Founder A {pick(a, setA)}</label>
-        <label>Founder B {pick(b, setB)}</label>
+        <label>Twin A {pick(a, setA)}</label>
+        <label>Twin B {pick(b, setB)}</label>
       </div>
       <label>
         Goal

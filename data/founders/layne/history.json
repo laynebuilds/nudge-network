@@ -1,0 +1,13 @@
+{
+  "owner": {
+    "id": "layne",
+    "name": "Layne Singh",
+    "public_bio": "Founder of Graby (graby.ai) and Minefirst (minefirst.ai): AI that finds and buys underpriced resale fashion on Vinted and eBay. London."
+  },
+  "items": [
+    { "id": "layne:doc:graby", "source": "doc", "ts": "2026-07-01", "title": "Public: graby.ai", "text": "Graby is a search engine for resale fashion deals. It ingests Vinted listings, screens them for price and authenticity, and shows the underpriced ones. UK Ltd, with a German version on vinted.de. Paid Pro plan through Stripe." },
+    { "id": "layne:doc:minefirst", "source": "doc", "ts": "2026-08-01", "title": "Public: minefirst.ai", "text": "Minefirst sends brand, category and price alerts for Vinted and eBay UK, screened by an AI authenticity checker, at 9.99 a month. Live in the UK and Germany (de.minefirst.ai)." },
+    { "id": "layne:doc:agent", "source": "doc", "ts": "2026-10-21", "title": "Public: Minefirst Agent", "text": "Building an agent that negotiates and buys on Vinted on the user's behalf: it makes offers, waits for acceptance and checks out, charging a share of the money it saves." },
+    { "id": "layne:doc:hackathon", "source": "doc", "ts": "2026-10-30", "title": "Hackathon: Nudge Network", "text": "Building Nudge Network with Jasnoor: two people's digital twins negotiate something valuable, and a sealed-intent eval checks the twins actually act like their owners." }
+  ]
+}
