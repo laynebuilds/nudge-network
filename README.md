@@ -94,3 +94,8 @@ Next.js 16, TypeScript, Anthropic SDK with `claude-opus-5-5` and structured outp
 - Photo ingest (captions via vision) and calendar ingest.
 - More founder pairs and a leaderboard of probe accuracy and red line violations across runs.
 - Live mode: each twin runs on its owner's own machine and only messages cross the wire.
+
+## Team
+
+- Layne Singh ([@laynebuilds](https://github.com/laynebuilds))
+- Jasnoor Kaur ([@jasnoorkaur111](https://github.com/jasnoorkaur111)), author of [Nudge](https://github.com/jasnoorkaur111/imessage-mcp), which powers real-history ingest
