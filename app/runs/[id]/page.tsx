@@ -57,6 +57,7 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
           {run.a.name} x {run.b.name}
         </h1>
         <p className="muted">{run.goal}</p>
+        <p><a href={`/runs/${run.id}/chat`}>Watch it as iMessage</a></p>
         <div className="stages">
           {STAGES.map((s) => (
             <span key={s} className={`pill ${run.stage === s ? "on" : STAGES.indexOf(s) < STAGES.indexOf(run.stage) ? "past" : ""}`}>

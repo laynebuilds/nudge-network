@@ -33,7 +33,7 @@ export default function StartForm({
       setBusy(false);
       return;
     }
-    router.push(`/runs/${body.id}`);
+    router.push(`/runs/${body.id}/chat`);
   }
 
   const pick = (value: string, set: (v: string) => void) => (
