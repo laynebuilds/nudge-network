@@ -39,7 +39,7 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
   }, [id]);
 
   if (error) return <section className="card"><p className="error">{error}</p></section>;
-  if (!run) return <p className="muted">Loading...</p>;
+  if (!run) return <p className="thinking">Loading run <i /><i /><i /></p>;
   const name = (s: "a" | "b") => (s === "a" ? run.a.name : run.b.name);
   const o = run.outcome;
   // Without auth (local demo) there is no signed-in founder, so both decision boxes show.
@@ -48,13 +48,14 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
   return (
     <>
       <section className="card">
+        <span className="eyebrow">Run {run.id}</span>
         <h1>
-          {run.a.name} x {run.b.name}
+          {run.a.name} <span className="muted">and</span> {run.b.name}
         </h1>
         <p className="muted">{run.goal}</p>
         <div className="stages">
           {STAGES.map((s) => (
-            <span key={s} className={`pill ${run.stage === s ? "on" : STAGES.indexOf(s) < STAGES.indexOf(run.stage) ? "past" : ""}`}>
+            <span key={s} className={`pill ${run.stage === s ? (s === "done" ? "done" : "on") : STAGES.indexOf(s) < STAGES.indexOf(run.stage) ? "past" : ""}`}>
               {s}
             </span>
           ))}
@@ -71,7 +72,7 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
       {o && run.stage !== "mediating" && (
         <section className="card">
           <span className={`pill verdict ${o.verdict}`}>{o.verdict.replace("_", " ")}</span>
-          <h2>{o.headline}</h2>
+          <h2 className="headline">{o.headline}</h2>
           <table className="terms">
             <tbody>
               {o.proposal.map((p) => (
@@ -84,7 +85,7 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
           </table>
           <h3>Why</h3>
           <p>{o.reasoning}</p>
-          <div className="pair">
+          <div className="gains">
             {(["a", "b"] as const).map((s) => (
               <div key={s}>
                 <h3>{name(s)} gains</h3>
@@ -139,7 +140,9 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
 
       <section className="card">
         <h2>Conversation</h2>
-        {run.transcript.length === 0 && <p className="muted">The twins are getting started. Keep this page open.</p>}
+        {run.stage !== "done" && run.stage !== "error" && (
+          <p className="muted">Keep this page open while the run is live. It is what moves the negotiation forward.</p>
+        )}
         {run.transcript.map((e, i) => (
           <div key={i} className={`bubble ${e.side}`}>
             <div className="who">
@@ -156,7 +159,10 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
             )}
           </div>
         ))}
-        {run.stage === "negotiating" && <p className="muted">Next twin is thinking...</p>}
+        {run.stage === "negotiating" && <p className="thinking">Next twin is thinking <i /><i /><i /></p>}
+        {run.stage !== "done" && run.stage !== "error" && run.stage !== "negotiating" && (
+          <p className="thinking">{run.stage === "mediating" ? "The mediator is writing the proposal" : run.stage === "ratifying" ? "Each twin is checking the proposal" : "Scoring against sealed intent"} <i /><i /><i /></p>
+        )}
       </section>
     </>
   );
