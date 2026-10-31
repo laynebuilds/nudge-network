@@ -15,6 +15,7 @@ const STARTER_PROBES = [
 export default function MePage() {
   const [founder, setFounder] = useState<Founder | null>(null);
   const [editable, setEditable] = useState<string[]>([]);
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
 
   async function load() {
@@ -23,6 +24,7 @@ export default function MePage() {
     if (!res.ok) return setError(body.error);
     setFounder(body.founder);
     setEditable(body.editable);
+    setPhone(body.phone);
   }
   useEffect(() => {
     load();
@@ -33,7 +35,7 @@ export default function MePage() {
 
   return (
     <>
-      <Profile founder={founder} />
+      <Profile founder={founder} phone={phone} />
       <Connect reload={load} />
       <History founder={founder} editable={editable} reload={load} />
       <Sealed />
@@ -41,12 +43,13 @@ export default function MePage() {
   );
 }
 
-function Profile({ founder }: { founder: Founder }) {
+function Profile({ founder, phone: savedPhone }: { founder: Founder; phone: string }) {
   const [name, setName] = useState(founder.owner.name);
+  const [phone, setPhone] = useState(savedPhone);
   const [bio, setBio] = useState(founder.owner.public_bio);
   const [saved, setSaved] = useState(false);
   async function save() {
-    await fetch("/api/me", { method: "PUT", body: JSON.stringify({ name, public_bio: bio }) });
+    await fetch("/api/me", { method: "PUT", body: JSON.stringify({ name, public_bio: bio, phone }) });
     setSaved(true);
   }
   return (
@@ -59,6 +62,7 @@ function Profile({ founder }: { founder: Founder }) {
       <div className="form">
         <label>Name<input value={name} onChange={(e) => { setName(e.target.value); setSaved(false); }} /></label>
         <label>Public bio<textarea rows={2} value={bio} onChange={(e) => { setBio(e.target.value); setSaved(false); }} /></label>
+        <label>iMessage number (for opportunity texts via Photon)<input value={phone} onChange={(e) => { setPhone(e.target.value); setSaved(false); }} placeholder="+1 415 555 0100" /></label>
         <div className="row"><button onClick={save}>{saved ? "Saved" : "Save"}</button></div>
       </div>
     </section>

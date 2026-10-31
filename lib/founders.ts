@@ -7,7 +7,7 @@ import { readJson, writeJson } from "./store";
 // plus whatever they added themselves in the app (stored privately, never in git).
 export const DATA_DIR = join(process.cwd(), "data", "founders");
 
-export type Profile = { name?: string; public_bio?: string; items: HistoryItem[] };
+export type Profile = { name?: string; public_bio?: string; phone?: string; items: HistoryItem[] };
 export type FounderSummary = { id: string; name: string; public_bio: string; demo: boolean; items: number; sealed: boolean };
 
 const seedIds = () =>

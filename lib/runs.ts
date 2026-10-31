@@ -17,6 +17,7 @@ export type Run = NegotiationState & {
   decisions: Record<string, Decision>;
   lockUntil?: number;
   updatedAt?: string;
+  notified?: string[];
 };
 
 const path = (id: string) => `runs/${id.replace(/[^a-z0-9-]/gi, "")}.json`;
@@ -71,6 +72,12 @@ export async function stepRun(id: string): Promise<Run | null> {
         run.fidelity = await scoreFidelity(run.founders.a, run.founders.b, sa, sb, run.transcript, run.outcome!);
       }
       run.stage = "done";
+      try {
+        const { notifyOpportunity } = await import("./photon");
+        run.notified = await notifyOpportunity(run);
+      } catch (err) {
+        console.error("Photon notify failed", err);
+      }
     } else {
       await advance(run);
     }
