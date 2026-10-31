@@ -1,4 +1,4 @@
-# Jebln (Nudge Network)
+# Jebln
 
 **Your twin goes first.** Two founders' digital twins meet, negotiate on their own, and come back with a proposal the humans accept, reject, or modify, by replying to an iMessage.
 
