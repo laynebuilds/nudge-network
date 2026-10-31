@@ -24,7 +24,7 @@ export async function researchFounder(f: Founder): Promise<Dossier> {
   }
   if (!pages.length) return { facts: [], doubts: ["No public pages found."] };
   const { data } = await ask({
-    system: `You prepare a short public dossier on ${f.owner.name} (${f.owner.public_bio}) for someone about to negotiate with them. Use only the pages given. Keep facts that matter for working together: what they build, track record, education, location, commitments, public stances. Each fact carries the URL it came from. Put pages that may be about a different person with the same name under doubts. At most 10 facts.`,
+    system: `You prepare a short public dossier on ${f.owner.name} (${f.owner.public_bio}) for someone about to negotiate with them. Use only the pages given. Keep facts that matter for working together: what they build, track record, education, location, commitments, public stances. Each fact carries the URL it came from. Put pages that may be about a different person with the same name under doubts. Leave out personal data even when public: birth dates, age, nationality, home address, family, health, follower counts. At most 10 facts.`,
     messages: [{ role: "user", content: pages.map((p) => `URL: ${p.url}\nTITLE: ${p.title}\n${p.text}`).join("\n\n---\n\n") }],
     schema: Dossier,
     effort: "low",
