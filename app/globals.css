@@ -517,3 +517,8 @@ main.app-main { max-width: 1180px; padding: 96px 20px 40px; }
 .landing.plasma-on .chip-btn:hover:not(:disabled) { border-color: #fff; }
 .landing.plasma-on .chip-btn.on { background: #fff; color: var(--ink); border-color: #fff; }
 .landing.plasma-on .ob .error { color: #ffb4a8; }
+.sketch-chip { position: relative; background: transparent; border: none; border-radius: 0; color: inherit; font-weight: 500; font-size: 15px; padding: 11px 18px; }
+.sketch-chip:hover:not(:disabled) { transform: rotate(-1deg); box-shadow: none; }
+.sketch-chip > span { position: relative; z-index: 1; }
+.sketch-chip.on > span { color: var(--paper); }
+.landing.plasma-on .sketch-chip.on > span { color: var(--ink); }

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Planet from "../landing/planet";
 import Plasma from "../landing/plasma";
+import { RoughSvg } from "@/components/ui/textarea-utils/RoughSvg";
 
 // Sketch fields draw in the current text color, so they read on the plasma and on paper alike.
 const INK = "currentColor";
@@ -179,14 +180,13 @@ export default function Welcome() {
           <p className="lead">Pick as many as you like.</p>
           <div className="chips">
             {LOOKING.map((l) => (
-              <button
+              <SketchChip
                 key={l}
-                type="button"
-                className={`chip-btn ${looking.includes(l) ? "on" : ""}`}
+                label={l}
+                seed={l.length * 7 + 3}
+                on={looking.includes(l)}
                 onClick={() => setLooking(looking.includes(l) ? looking.filter((x) => x !== l) : [...looking, l])}
-              >
-                {l}
-              </button>
+              />
             ))}
           </div>
           <Textarea
@@ -254,6 +254,16 @@ export default function Welcome() {
         )}
       </div>
     </div>
+  );
+}
+
+// A choice drawn like the sketch fields: outlined when off, filled in when picked.
+function SketchChip({ label, on, seed, onClick }: { label: string; on: boolean; seed: number; onClick: () => void }) {
+  return (
+    <button type="button" className={`sketch-chip ${on ? "on" : ""}`} aria-pressed={on} onClick={onClick}>
+      <RoughSvg sketchColor="currentColor" seed={seed} roughness={1.4} strokeWidth={1.75} fillStyle={on ? "solid" : undefined} />
+      <span>{label}</span>
+    </button>
   );
 }
 
