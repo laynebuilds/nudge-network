@@ -62,7 +62,7 @@ export default function InboxApp({
         .then((b) => setMatches(b.matches ?? []))
         .catch(() => {});
       Promise.all([fetch("/api/me").then((r) => r.json()), fetch("/api/me/sealed").then((r) => r.json())])
-        .then(([m, s]) => setSetup(!m.founder?.owner?.public_bio || !s.red_lines?.length))
+        .then(([m, s]) => setSetup(!m.founder?.owner?.public_bio || !s.red_lines?.length || !m.phone))
         .catch(() => {});
     }
   }, [me]);

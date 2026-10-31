@@ -97,7 +97,7 @@ export default function Welcome() {
           probes: PRIVATE_QS.map((question, i) => ({ id: String(i), question, answer: answers[i] })),
         });
       }
-      if (step === 3) await put("/api/me", { phone });
+      if (step === 3) await put("/api/me", { phone: e164(phone) });
       setStep(step + 1);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Something went wrong. Try again.");
@@ -105,7 +105,9 @@ export default function Welcome() {
     setBusy(false);
   }
 
-  const canNext = [name.trim() && bio.trim() && handleOf(handles.linkedin), true, lines.some((l) => l.trim()), true][step];
+  // Photon texts founders at this number, so it's required: at least 10 digits, country code welcome.
+  const phoneOk = phone.replace(/\D/g, "").length >= 10;
+  const canNext = [name.trim() && bio.trim() && handleOf(handles.linkedin), true, lines.some((l) => l.trim()), phoneOk][step];
 
   const shell = (children: React.ReactNode) => (
     <main className="wide landing ob-page">
@@ -233,7 +235,7 @@ export default function Welcome() {
           <h1>Where should it text you?</h1>
           <p className="lead">When your twin finds someone worth meeting, it texts you. Reply yes and it sets up the meeting.</p>
           <Input sketchColor={INK} size="lg" label="iMessage number" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 415 555 0100" inputMode="tel" />
-          <p className="hint">Only used for your twin&apos;s texts. You can skip this and use the inbox instead.</p>
+          <p className="hint">Required. Only used for your twin&apos;s texts. Include your country code, like +1.</p>
         </>
       )}
 
@@ -247,7 +249,7 @@ export default function Welcome() {
             Back
           </button>
         )}
-        {(step === 1 || step === 3) && (
+        {step === 1 && (
           <button className="ob-link" onClick={() => setStep(step + 1)} disabled={busy}>
             Skip
           </button>
@@ -288,6 +290,16 @@ function PrefixInput({ prefix, ...props }: { prefix: string } & ComponentProps<t
       />
     </div>
   );
+}
+
+// Photon matches replies by exact number, so store it the way iMessage reports it: +<country><number>.
+// A bare 10-digit number is taken as US/Canada.
+function e164(raw: string) {
+  const d = raw.replace(/[^\d+]/g, "");
+  if (d.startsWith("+")) return d;
+  if (d.length === 10) return `+1${d}`;
+  if (d.length === 11 && d.startsWith("1")) return `+${d}`;
+  return `+${d}`;
 }
 
 async function put(url: string, body: unknown) {
