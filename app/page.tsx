@@ -3,6 +3,7 @@ import { listRuns } from "../lib/runs";
 import { DEFAULT_GOAL } from "../lib/goal";
 import { session } from "../lib/auth";
 import StartForm from "./start-form";
+import Matches from "./matches";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ export default async function Home() {
 
   return (
     <>
+      {me.id && <Matches me={me.id} />}
       <section className="card">
         <h1>Introduce two twins</h1>
         <p className="muted">
