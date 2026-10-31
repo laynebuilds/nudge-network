@@ -4,6 +4,7 @@
   --card: #ffffff;
   --ink: #17121c;
   --ink-2: #4f4856;
+  --accent: #17121c;
   --muted: #827b88;
   --line: rgba(23, 18, 28, .1);
   --line-2: rgba(23, 18, 28, .18);
@@ -381,3 +382,15 @@ summary { cursor: pointer; color: var(--muted); font-size: 13px; }
 .outcome-card p { margin: 6px 0 0; }
 .phone-foot { padding: 10px 16px 14px; border-top: 0.5px solid rgba(128, 128, 128, 0.3); }
 .phone-foot span { display: block; border: 1px solid rgba(128, 128, 128, 0.4); border-radius: 18px; padding: 6px 12px; font-size: 14px; color: #8e8e93; }
+.bookmarklet { display: inline-block; padding: 4px 12px; border-radius: 99px; background: var(--accent); color: #fff; text-decoration: none; font-weight: 600; cursor: grab; }
+details.more > summary { font-weight: 600; font-size: 15px; color: var(--ink); }
+details.more > .card { border: none; padding: 16px 0 0; margin: 0; }
+.link-results { list-style: none; padding: 0; margin: 4px 0 0; font-size: 14px; }
+.link-results .ok { color: var(--ok); }
+.link-results .bad { color: var(--bad); }
+.msg .bubble-i + .bubble-i { margin-top: 2px; }
+.matches { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 10px; }
+.matches li { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: center; border-top: 1px solid var(--line); padding-top: 10px; }
+@media (max-width: 600px) { .matches li { grid-template-columns: 44px 1fr; } .matches li button { grid-column: 1 / -1; } }
+.match-score { font-size: 22px; font-weight: 700; color: var(--accent); text-align: center; }
+.match-body p { margin: 2px 0; font-size: 14px; }

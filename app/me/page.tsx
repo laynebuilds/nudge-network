@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Founder, SealedIntent } from "../../lib/schemas";
 
 const SOURCES = ["note", "imessage", "whatsapp", "email", "calendar", "photo", "doc"] as const;
@@ -40,8 +40,15 @@ export default function MePage() {
         <p className="lede">Your twin knows only what is on this page. Other twins never see your history, only what your twin chooses to say.</p>
       </div>
       <Profile founder={founder} phone={phone} />
-      <Connect reload={load} />
-      <History founder={founder} editable={editable} reload={load} />
+      <Links reload={load} />
+      <Photos reload={load} />
+      <details className="card more">
+        <summary>More ways to teach your twin (optional)</summary>
+        <About reload={load} />
+        <Bookmark />
+        <Connect reload={load} />
+        <History founder={founder} editable={editable} reload={load} />
+      </details>
       <Sealed />
     </>
   );
@@ -180,8 +187,8 @@ function Sealed() {
 
   if (!sealed) return null;
   return (
-    <section className="card">
-      <h2>Sealed intent</h2>
+    <details className="card more">
+      <summary>Answer key for the scorecard (private, 2 minutes)</summary>
       <p className="muted">
         Only you see this. No agent and not the other person ever reads it. After a run, the scorer asks your twin to predict
         these answers blind and checks the final proposal against your red lines. Answer honestly and specifically; write it
@@ -203,7 +210,7 @@ function Sealed() {
         </div>
         {msg && <p className="muted">{msg}</p>}
       </div>
-    </section>
+    </details>
   );
 }
 
@@ -338,6 +345,167 @@ function Connect({ reload }: { reload: () => void }) {
       <pre className="cmd">{`NUDGE_TOKEN=your-token npm run ingest:nudge -- --id your-id --contacts "Name One,Name Two" --days 90
 # review .data/ingest/your-id.json, then:
 NUDGE_TOKEN=your-token npm run upload -- --file .data/ingest/your-id.json --url ${typeof window === "undefined" ? "" : window.location.origin}`}</pre>
+    </section>
+  );
+}
+
+function About({ reload }: { reload: () => void }) {
+  const [qs, setQs] = useState<{ question: string; answer: string }[]>([]);
+  const [msg, setMsg] = useState("");
+  useEffect(() => {
+    fetch("/api/me/about", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((b) => setQs(b.questions ?? []));
+  }, []);
+  async function save() {
+    const res = await fetch("/api/me/about", { method: "PUT", body: JSON.stringify({ answers: qs.map((q) => q.answer) }) });
+    const body = await res.json();
+    setMsg(res.ok ? `Saved ${body.saved} answers. Your twin reads them in your own words.` : body.error);
+    reload();
+  }
+  return (
+    <section className="card">
+      <h2>In your own words</h2>
+      <p className="muted">
+        Ten questions about purpose, values and where you are heading. Your twin reads these answers, so answer the way you
+        would to a close friend. A few honest sentences each beat a polished paragraph.
+      </p>
+      <div className="form">
+        {qs.map((q, i) => (
+          <label key={i}>
+            {i + 1}. {q.question}
+            <textarea rows={3} value={q.answer} onChange={(e) => setQs(qs.map((x, j) => (j === i ? { ...x, answer: e.target.value } : x)))} />
+          </label>
+        ))}
+        <div className="row"><button onClick={save}>Save answers</button></div>
+        {msg && <p className="muted">{msg}</p>}
+      </div>
+    </section>
+  );
+}
+
+// Runs in the owner's own logged-in tab. It opens our capture page and hands it the page text by window
+// message, because LinkedIn, X and Instagram block scripts from calling other domains directly.
+const BOOKMARK = (origin: string) =>
+  `javascript:(()=>{const o=${JSON.stringify(origin)};const w=window.open(o+'/capture','nudge','width=520,height=640');` +
+  `const p={url:location.href,title:document.title,text:document.body.innerText.slice(0,70000),` +
+  `images:[...document.images].map(i=>i.alt).filter(a=>a&&a.length>20).slice(0,60)};` +
+  `const h=e=>{if(e.origin===o&&e.data&&e.data.type==='nudge-ready'){w.postMessage({type:'nudge-capture',page:p},o);removeEventListener('message',h)}};` +
+  `addEventListener('message',h)})()`;
+
+function Bookmark() {
+  const ref = useRef<HTMLAnchorElement>(null);
+  useEffect(() => {
+    // React refuses javascript: URLs in JSX, so the bookmark's address is set directly.
+    ref.current?.setAttribute("href", BOOKMARK(window.location.origin));
+  }, []);
+  return (
+    <section className="card">
+      <h2>Send pages to your twin from your browser</h2>
+      <p className="muted">
+        Works on LinkedIn, X, Instagram and any other page, because it reads what you already see while logged in.
+      </p>
+      <ol>
+        <li>Drag this button to your bookmarks bar: <a ref={ref} className="bookmarklet" onClick={(e) => e.preventDefault()}>Send to my twin</a></li>
+        <li>Open your LinkedIn profile (click &quot;see more&quot; on About), then click the bookmark and press Add.</li>
+        <li>Do the same on your LinkedIn activity page, your X profile scrolled through your recent posts, and your Instagram profile.</li>
+      </ol>
+      <p className="muted">Only what the page says about you is kept, plus your own posts and captions word for word.</p>
+    </section>
+  );
+}
+
+function Links({ reload }: { reload: () => void }) {
+  const [links, setLinks] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [results, setResults] = useState<{ url: string; label: string; ok: boolean; note: string }[]>([]);
+  const [research, setResearch] = useState<{ summary: string; facts: { fact: string; category?: string; url: string }[] } | null>(null);
+  const [researching, setResearching] = useState(false);
+  async function researchMe() {
+    setResearching(true);
+    const res = await fetch("/api/me/research", { method: "POST" });
+    const body = await res.json();
+    setResearching(false);
+    if (res.ok) setResearch(body);
+    reload();
+  }
+  async function connect() {
+    setBusy(true);
+    const res = await fetch("/api/me/links", { method: "POST", body: JSON.stringify({ links }) });
+    const body = await res.json();
+    setBusy(false);
+    if (!res.ok) return setResults([{ url: "", label: "", ok: false, note: body.error }]);
+    setResults(body.results);
+    reload();
+  }
+  return (
+    <section className="card">
+      <h2>Your links</h2>
+      <p className="muted">Paste your LinkedIn, X, Instagram and website links, all at once. Your twin reads your profiles and recent posts.</p>
+      <div className="form">
+        <textarea rows={3} value={links} onChange={(e) => setLinks(e.target.value)} placeholder={"https://www.linkedin.com/in/...\nhttps://x.com/...\nhttps://www.instagram.com/..."} />
+        <div className="row"><button onClick={connect} disabled={busy || !links.trim()}>{busy ? "Reading your links..." : "Connect"}</button></div>
+        <div className="row">
+          <button className="secondary" onClick={researchMe} disabled={researching}>
+            {researching ? "Searching the web for you..." : "Research me on the web"}
+          </button>
+        </div>
+        {research && (
+          <div>
+            <p>{research.summary}</p>
+            <ul className="link-results">
+              {research.facts.map((f, i) => (
+                <li key={i}><span className="pill">{f.category ?? "context"}</span> {f.fact}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {results.length > 0 && (
+          <ul className="link-results">
+            {results.map((r, i) => (
+              <li key={i} className={r.ok ? "ok" : "bad"}>{r.label ? `${r.label}: ` : ""}{r.note}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function Photos({ reload }: { reload: () => void }) {
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function photos(files: FileList) {
+    setBusy(true);
+    const list = [...files].slice(0, 120);
+    let added = 0;
+    for (let i = 0; i < list.length; i += 6) {
+      setMsg(`Reading photos ${i + 1} to ${Math.min(i + 6, list.length)} of ${list.length}...`);
+      const batch = await Promise.all(
+        list.slice(i, i + 6).map(async (f) => ({ name: f.name, data: await toJpeg(f), ts: new Date(f.lastModified).toISOString().slice(0, 10) }))
+      ).catch(() => null);
+      if (!batch) continue;
+      const res = await fetch("/api/me/photos", { method: "POST", body: JSON.stringify({ images: batch }) });
+      const body = await res.json();
+      if (!res.ok) {
+        setMsg(body.error);
+        break;
+      }
+      added += body.added;
+    }
+    setMsg(`${added} photos added to your twin. The images were not stored.`);
+    setBusy(false);
+    reload();
+  }
+  return (
+    <section className="card">
+      <h2>Your photos</h2>
+      <p className="muted">Pick 20 to 40 photos of your life and work. Only short notes about them are kept.</p>
+      <label className="file">
+        {busy ? "Working..." : "Choose photos"}
+        <input type="file" accept="image/*" multiple disabled={busy} onChange={(e) => e.target.files?.length && photos(e.target.files)} />
+      </label>
+      {msg && <p className="muted">{msg}</p>}
     </section>
   );
 }

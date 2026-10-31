@@ -3,7 +3,7 @@ import { z } from "zod";
 // One history item from an owner's digital life (message, email, photo caption, calendar entry, note, doc).
 export const HistoryItem = z.object({
   id: z.string(),
-  source: z.enum(["imessage", "email", "calendar", "note", "photo", "doc", "whatsapp"]),
+  source: z.enum(["imessage", "email", "calendar", "note", "photo", "doc", "whatsapp", "linkedin", "x", "instagram", "interview"]),
   ts: z.string(),
   with: z.string().optional(),
   title: z.string().optional(),
@@ -29,7 +29,7 @@ export type SealedIntent = z.infer<typeof SealedIntent>;
 
 // What a twin produces on every negotiation turn.
 export const TwinTurn = z.object({
-  message: z.string().describe("What you say to the other twin. This is the only field the other side sees."),
+  message: z.string().describe("Your text to the other twin: one or two short casual lines, like iMessage. The only field the other side sees."),
   private_reasoning: z.string().describe("Why you said it, in terms of your owner's interests. Never shown to the other side."),
   evidence: z.array(z.string()).describe("History item ids that justify the positions you hold this turn."),
   terms: z

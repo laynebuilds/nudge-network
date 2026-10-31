@@ -146,14 +146,14 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
       {run.dossiers && (
         <section className="card">
           <h2>What each twin found out first</h2>
-          <p className="muted">Before talking, each twin researched the other person&apos;s public footprint with Firecrawl.</p>
+          <p className="muted">Before talking, each twin researched the other person on the web, including where the two of you overlap.</p>
           {(["a", "b"] as const).map((s) => (
             <details key={s}>
               <summary>On {name(s)}: {run.dossiers![s].facts.length} public facts</summary>
               <ul>
                 {run.dossiers![s].facts.map((f, i) => (
                   <li key={i}>
-                    {f.fact} <a href={f.url} target="_blank" rel="noreferrer">source</a>
+                    {"category" in f && f.category ? <span className="pill">{f.category}</span> : null} {f.fact} <a href={f.url} target="_blank" rel="noreferrer">source</a>
                   </li>
                 ))}
               </ul>

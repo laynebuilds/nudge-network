@@ -22,7 +22,8 @@ export type NegotiationState = {
   revised: boolean;
 };
 
-export const MAX_TURNS = Number(process.env.NUDGE_MAX_TURNS ?? 12);
+// Short texts mean more back and forth, so the cap is higher than for long-form turns.
+export const MAX_TURNS = Number(process.env.NUDGE_MAX_TURNS ?? 24);
 
 const systems = (s: NegotiationState) => ({
   a: twinSystem(s.founders.a, s.founders.b.owner.name, s.goal) + renderDossier(s.founders.b.owner.name, s.dossiers?.b),
@@ -36,7 +37,8 @@ export function initialState(a: Founder, b: Founder, goal: string): NegotiationS
 // Advance one step. Returns once the state has moved forward; "scoring" is left to the caller.
 export async function advance(s: NegotiationState): Promise<void> {
   if (s.stage === "researching") {
-    const [da, db] = await Promise.all([researchFounder(s.founders.a), researchFounder(s.founders.b)]);
+    // dossiers.a is research on a written for b, so "mutual" signals are relative to the reader.
+    const [da, db] = await Promise.all([researchFounder(s.founders.a, s.founders.b), researchFounder(s.founders.b, s.founders.a)]);
     s.dossiers = { a: da, b: db };
     s.stage = "negotiating";
     return;

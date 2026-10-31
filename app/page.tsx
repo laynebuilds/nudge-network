@@ -3,6 +3,7 @@ import { listRuns } from "../lib/runs";
 import { DEFAULT_GOAL } from "../lib/goal";
 import { session } from "../lib/auth";
 import StartForm from "./start-form";
+import Matches from "./matches";
 import Story from "./landing/story";
 import Hero from "./landing/hero";
 import Reveal from "./landing/reveal";
@@ -23,6 +24,7 @@ export default async function Home() {
 
   return (
     <main>
+      {me.id && <Matches me={me.id} />}
       <div className="page-head">
         <span className="eyebrow">New meeting</span>
         <h1>Introduce two twins</h1>

@@ -38,6 +38,9 @@ export function resumeStalled(req: Request) {
       (r) => !finished(r.stage) && (!r.lockUntil || r.lockUntil < now) && now - Date.parse(r.updatedAt ?? r.createdAt) > STALL_MS
     );
     await Promise.all(stalled.map((r) => kick(new URL(`/api/runs/${r.id}/step`, req.url), secret)));
+    // Also pick up any iMessage replies the Photon webhook may have missed.
+    const { processInbound } = await import("./photon");
+    await processInbound().catch((err) => console.error("Photon inbound failed", err));
   });
 }
 

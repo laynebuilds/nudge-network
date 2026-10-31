@@ -1,8 +1,10 @@
-# Jebln
+# Jebln (Nudge Network)
 
-Two founders' digital twins meet, negotiate, and come back with a proposal the humans can accept, reject, or modify.
+**Your twin goes first.** Two founders' digital twins meet, negotiate on their own, and come back with a proposal the humans accept, reject, or modify, by replying to an iMessage.
 
-Each twin is built from its owner's real digital history (iMessage, email, calendar, photo captions, notes, docs). The twins talk to each other, ask questions, trade preferences, hold red lines, and hand back a proposal with the reasoning, what each side gains, the constraints they respected, and the questions only a human can answer.
+Live: https://nudge-network.vercel.app (invite only) · Watch a run as iMessage: `/runs/<id>/chat`
+
+Each twin is built from its owner's real digital life: their links (LinkedIn, X, Instagram, website), their photo gallery, their messages (iMessage via Nudge, WhatsApp exports), and what the web says about them. The twins talk to each other, ask questions, trade preferences, hold red lines, and hand back a proposal with the reasoning, what each side gains, the constraints they respected, and the questions only a human can answer.
 
 ## The question at the centre
 
@@ -19,9 +21,18 @@ Everything in the repo is built to answer that with numbers, not vibes:
 
 A clean "no fit" counts as success when it is the honest answer. The twins are told that a deal is not the goal; a deal their owner would sign is.
 
+## Partners used
+
+| Partner | Where |
+| --- | --- |
+| **Anthropic** (Claude Opus 5.5) | Every agent: twins, mediator, ratification, scorer, photo captions, profile distillation, and person research via Claude's server-side web search |
+| **Photon** (iMessage API) | When the twins find an opportunity, each founder gets an iMessage with the headline, what needs them, and a link. Replying ACCEPT, REJECT or MODIFY records their decision (`lib/photon.ts`, `/api/photon/webhook`) |
+| **Firecrawl** | Reads websites and public pages people connect to their twin (`lib/firecrawl.ts`) |
+
 ## How a run works
 
 ```
+research (web) ─> both twins read a sourced brief on the other, including mutual overlaps
 history (A) ──> Twin A ─┐                         ┌─> Twin A ratifies ─┐
                         ├─ negotiate (turns) ─> Mediator ─┤                    ├─> proposal ─> founders decide
 history (B) ──> Twin B ─┘    public messages only  └─> Twin B ratifies ─┘        (accept / reject / modify)
@@ -29,6 +40,7 @@ history (B) ──> Twin B ─┘    public messages only  └─> Twin B ratifi
 sealed intent (A, B) ───────────────────────────────────────────────────> fidelity scorecard
 ```
 
+- **Research** (`lib/research.ts`): two-step person research ported from Orbit (jasnoorkaur111/Orbit-Personal-CRM): connected profile links pin identity, then 5 to 8 specific, sourced signals tagged professional, recent, interest, personal, mutual or context. Namesakes go to a doubts list, never into the brief.
 - **Twins** (`lib/twin.ts`) see only their own owner's history. Each turn returns a structured move: message to the other side, private reasoning, evidence ids, per-topic positions (firm / flexible / open), status (continue / ready / walk_away), and questions for the owner.
 - **Mediator** (`lib/negotiate.ts`) sees only what the twins said to each other and their declared terms, never either history. It writes the outcome: proposal, reasoning, gains per side, constraints respected, unresolved questions.
 - **Ratification**: each twin checks the proposal against its owner. If either objects, the mediator revises once, then the twins check again.
@@ -36,12 +48,13 @@ sealed intent (A, B) ───────────────────�
 
 ## Your twin: plug in your life
 
-Each person signs in with a private invite link and builds their twin at `/me`:
+Each person signs in with a private invite link and builds their twin at `/me` in about two minutes:
 
-- **Messaging.** WhatsApp: Export chat (without media), upload the .zip or .txt. iMessage and Apple Mail on a Mac: [Nudge](https://github.com/jasnoorkaur111/imessage-mcp) reads them locally, you review the file, then upload only what you keep.
-- **Photo gallery.** Pick photos from your phone or Mac. They are resized in the browser, Claude writes a short note on what each one says about your life (places, work, routines, people by relationship), and only the notes are kept. Images are never stored.
-- **Notes.** Paste anything else: a thread, a plan, a decision you made.
-- **Sealed intent.** Your red lines and your honest answers to probe questions. Only you see it; it is how the scorecard checks your twin.
+1. **Your links.** Paste LinkedIn, X, Instagram and website links in one box. LinkedIn is read from its public profile (including recent posts), X through a public mirror (bio plus up to 80 recent posts and replies), websites through Firecrawl. Claude keeps what each says about you plus your own words verbatim.
+2. **Research me on the web.** One click, Orbit-style signals with sources.
+3. **Your photos.** Pick 20 to 40 from your phone or Mac, or run `npm run ingest:photos` to read the Apple Photos library directly (favourites and named people first). Claude writes a note per photo; images are never stored.
+
+Optional: ten questions about purpose, values and the next year (the twin weighs these above inference), a "Send to my twin" browser bookmark for pages behind a login (Instagram posts), WhatsApp export upload, iMessage and Apple Mail via [Nudge](https://github.com/jasnoorkaur111/imessage-mcp), free notes, and the sealed answer key for the scorecard.
 
 Real histories never go in git. They live in a private Vercel Blob store. `data/founders/` holds only public facts and the demo pair.
 
@@ -64,7 +77,7 @@ npm run ingest:nudge -- --id layne --contacts "Jasnoor" --days 90
 NUDGE_TOKEN=... npm run upload -- --file .data/ingest/layne.json --url https://<deployment>
 ```
 
-Runs advance one model step per request (the open run page drives them), so nothing hits serverless time limits. A lease with a conditional Blob write stops two viewers from stepping the same run at once.
+Runs drive themselves on the server: each background call does as many model steps as fit in about 2.5 minutes, then hands off to the next, so a full run finishes with nobody watching. A lease with a conditional Blob write stops double steps, and a watchdog resumes any run that stalls.
 
 ## Layout
 
@@ -78,6 +91,10 @@ lib/runs.ts         run lifecycle, stepping, per-viewer redaction
 lib/store.ts        private Vercel Blob (or .data/ locally)
 lib/auth.ts         invite-link sign-in
 lib/whatsapp.ts     WhatsApp export parser
+lib/research.ts     Orbit-style person research with Claude web search
+lib/social.ts       LinkedIn and X public readers, distillation
+lib/photon.ts       iMessage opportunity texts and reply-to-decide
+lib/autorun.ts      self-driving runs and watchdog
 app/                Next.js reveal UI and API
 scripts/            negotiate and eval CLIs, Nudge ingest
 ```
@@ -86,10 +103,14 @@ scripts/            negotiate and eval CLIs, Nudge ingest
 
 Next.js 16, TypeScript, Anthropic SDK with `claude-opus-5-5` and structured outputs (Zod). Server-side refusal fallbacks are on (`fallbacks: "default"`). Override the model with `NUDGE_MODEL`.
 
+## What we learned from the first real run (Layne x Jasnoor)
+
+The twins negotiated a sensible Phase 1 (4 to 8 week joint project, 50/50 on joint work, pre-existing IP ring-fenced, either side can walk) without supervision, corrected each other's facts, and flagged hours and investor terms as owner questions instead of guessing. But on the sealed probes they scored 10% against a 30% bio-only baseline: histories full of activity said little about preferences like equity views or available time. That is the eval doing its job, and it is why the twin builder now pulls people's own words (posts, the ten questions) rather than only activity.
+
 ## Next
 
+- Twins text their owner over Photon mid-negotiation when history does not answer something, and the answer goes into history.
 - Retrieval tool instead of full history in context, for real-sized histories.
-- Photo ingest (captions via vision) and calendar ingest.
 - More founder pairs and a leaderboard of probe accuracy and red line violations across runs.
 - Live mode: each twin runs on its owner's own machine and only messages cross the wire.
 
