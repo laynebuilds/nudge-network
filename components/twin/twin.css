@@ -76,4 +76,3 @@ main.twin-home { max-width: 720px; padding: 110px 20px 80px; }
 .twin-card .twin-why { color: var(--ink-2, #3a3540); }
 .twin-card .twin-red, .twin-card .twin-red * { color: #b3261e; }
 .twin-card button:not(.secondary):not(.ghost), .twin-card .button-link:not(.secondary) { color: #fff; }
-.twin-card .pill { color: inherit; }
