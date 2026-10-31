@@ -11,7 +11,8 @@
     "negotiate": "tsx scripts/negotiate.ts",
     "eval": "tsx scripts/eval.ts",
     "ingest:nudge": "node scripts/ingest-nudge.mjs",
-    "upload": "node scripts/upload-history.mjs"
+    "upload": "node scripts/upload-history.mjs",
+    "ingest:photos": "node scripts/ingest-photos.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",

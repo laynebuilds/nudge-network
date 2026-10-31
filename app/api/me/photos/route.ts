@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 
 const Body = z.object({
-  images: z.array(z.object({ name: z.string(), data: z.string(), ts: z.string() })).min(1).max(8),
+  images: z.array(z.object({ name: z.string(), data: z.string(), ts: z.string(), context: z.string().optional() })).min(1).max(8),
 });
 const Captions = z.object({
   photos: z.array(z.object({ index: z.number(), caption: z.string(), skip: z.boolean() })),
@@ -25,13 +25,13 @@ export async function POST(req: Request) {
   const founder = await loadFounder(me.id);
 
   const { data } = await ask({
-    system: `You turn ${founder.owner.name}'s own camera roll into notes for their digital twin. For each photo write one or two factual sentences about what it shows about their life: where they are, what they are doing, work in progress (whiteboards, screens, products), routines, hobbies, places they keep returning to, family and friends described by relationship or role, never by guessing names or identities of strangers. Note visible text that reveals plans, priorities or constraints. Mark skip true for screenshots of codes, documents with financial or ID numbers, or anything with no signal about their life.`,
+    system: `You turn ${founder.owner.name}'s own camera roll into notes for their digital twin. For each photo write one or two factual sentences about what it shows about their life: where they are, what they are doing, work in progress (whiteboards, screens, products), routines, hobbies, places they keep returning to, family and friends described by relationship or role, never by guessing names or identities of strangers. When Photos has named people, use those names. Note visible text that reveals plans, priorities or constraints. Mark skip true for screenshots of codes, documents with financial or ID numbers, or anything with no signal about their life.`,
     messages: [
       {
         role: "user",
         content: [
           ...images.flatMap((img, i) => [
-            { type: "text" as const, text: `Photo ${i} (taken ${img.ts})` },
+            { type: "text" as const, text: `Photo ${i} (taken ${img.ts}${img.context ? `; ${img.context}` : ""})` },
             { type: "image" as const, source: { type: "base64" as const, media_type: "image/jpeg" as const, data: img.data } },
           ]),
           { type: "text" as const, text: "Caption each photo by index." },
