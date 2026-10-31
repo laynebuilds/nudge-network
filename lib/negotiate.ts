@@ -36,7 +36,8 @@ export function initialState(a: Founder, b: Founder, goal: string): NegotiationS
 // Advance one step. Returns once the state has moved forward; "scoring" is left to the caller.
 export async function advance(s: NegotiationState): Promise<void> {
   if (s.stage === "researching") {
-    const [da, db] = await Promise.all([researchFounder(s.founders.a), researchFounder(s.founders.b)]);
+    // dossiers.a is research on a written for b, so "mutual" signals are relative to the reader.
+    const [da, db] = await Promise.all([researchFounder(s.founders.a, s.founders.b), researchFounder(s.founders.b, s.founders.a)]);
     s.dossiers = { a: da, b: db };
     s.stage = "negotiating";
     return;

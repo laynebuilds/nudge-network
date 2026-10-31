@@ -415,6 +415,16 @@ function Links({ reload }: { reload: () => void }) {
   const [links, setLinks] = useState("");
   const [busy, setBusy] = useState(false);
   const [results, setResults] = useState<{ url: string; label: string; ok: boolean; note: string }[]>([]);
+  const [research, setResearch] = useState<{ summary: string; facts: { fact: string; category?: string; url: string }[] } | null>(null);
+  const [researching, setResearching] = useState(false);
+  async function researchMe() {
+    setResearching(true);
+    const res = await fetch("/api/me/research", { method: "POST" });
+    const body = await res.json();
+    setResearching(false);
+    if (res.ok) setResearch(body);
+    reload();
+  }
   async function connect() {
     setBusy(true);
     const res = await fetch("/api/me/links", { method: "POST", body: JSON.stringify({ links }) });
@@ -431,6 +441,21 @@ function Links({ reload }: { reload: () => void }) {
       <div className="form">
         <textarea rows={3} value={links} onChange={(e) => setLinks(e.target.value)} placeholder={"https://www.linkedin.com/in/...\nhttps://x.com/...\nhttps://www.instagram.com/..."} />
         <div className="row"><button onClick={connect} disabled={busy || !links.trim()}>{busy ? "Reading your links..." : "Connect"}</button></div>
+        <div className="row">
+          <button className="secondary" onClick={researchMe} disabled={researching}>
+            {researching ? "Searching the web for you..." : "Research me on the web"}
+          </button>
+        </div>
+        {research && (
+          <div>
+            <p>{research.summary}</p>
+            <ul className="link-results">
+              {research.facts.map((f, i) => (
+                <li key={i}><span className="pill">{f.category ?? "context"}</span> {f.fact}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         {results.length > 0 && (
           <ul className="link-results">
             {results.map((r, i) => (
