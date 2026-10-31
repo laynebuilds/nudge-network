@@ -1,9 +1,7 @@
 import { listFounders } from "../lib/founders";
-import { listRuns } from "../lib/runs";
 import { DEFAULT_GOAL } from "../lib/goal";
 import { session } from "../lib/auth";
-import StartForm from "./start-form";
-import Matches from "./matches";
+import InboxApp from "./inbox-app";
 import Story from "./landing/story";
 import Hero from "./landing/hero";
 import Reveal from "./landing/reveal";
@@ -16,64 +14,20 @@ export default async function Home() {
   if (!me) return <Landing />;
 
   const founders = await listFounders();
-  const runs = (await listRuns()).filter((r) => me.admin || r.a.id === me.id || r.b.id === me.id);
   const real = founders.filter((f) => !f.demo);
   const choices = me.admin ? founders : founders.filter((f) => f.demo || f.id === me.id || !f.demo);
   const defA = me.id ?? real[0]?.id ?? founders[0].id;
   const defB = real.find((f) => f.id !== defA)?.id ?? founders.find((f) => f.id !== defA)!.id;
 
   return (
-    <main>
-      {me.id && <Matches me={me.id} />}
-      <div className="page-head">
-        <span className="eyebrow">New meeting</span>
-        <h1>Introduce two twins</h1>
-        <p className="lede">Pick two people. Their twins talk it out, and you both get the proposal.</p>
-      </div>
-
-      <section className="card">
-        {me.id && (
-          <p className="muted">
-            <a href="/me">Build your twin</a> before you run. The more real history it has, the more it acts like you.
-          </p>
-        )}
-        <ul className="founders">
-          {real.map((f) => (
-            <li key={f.id}>
-              <span className="avatar sm">{f.name[0]}</span>
-              <b>{f.name}</b>
-              <span className="muted">
-                {f.items} history items, {f.sealed ? "intent sealed" : "no sealed intent yet"}
-              </span>
-            </li>
-          ))}
-        </ul>
-        <StartForm founders={choices.map(({ id, name, demo }) => ({ id, name, demo }))} defaultA={defA} defaultB={defB} defaultGoal={DEFAULT_GOAL} />
-      </section>
-
-      <section className="card">
-        <h2>Runs</h2>
-        {runs.length === 0 && <p className="muted">No runs yet. Start one above.</p>}
-        <ul className="runs">
-          {runs.map((r) => (
-            <li key={r.id}>
-              <a href={`/runs/${r.id}`}>
-                <span className="names">
-                  {r.a.name}
-                  <i>and</i>
-                  {r.b.name}
-                </span>
-                <span>
-                  <span className={`pill ${r.stage === "done" ? r.outcome?.verdict ?? "done" : r.stage}`}>
-                    {r.stage === "done" && r.outcome ? r.outcome.verdict.replace("_", " ") : r.stage}
-                  </span>
-                </span>
-                {r.outcome && <span className="head">{r.outcome.headline}</span>}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
+    <main className="app-main">
+      <InboxApp
+        me={me.id}
+        founders={choices.map(({ id, name, demo }) => ({ id, name, demo }))}
+        defaultA={defA}
+        defaultB={defB}
+        defaultGoal={DEFAULT_GOAL}
+      />
     </main>
   );
 }
