@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { api } from "../lib/client";
 
 type F = { id: string; name: string; demo: boolean };
 
@@ -26,14 +27,13 @@ export default function StartForm({
   async function start() {
     setBusy(true);
     setError("");
-    const res = await fetch("/api/runs", { method: "POST", body: JSON.stringify({ a, b, goal }) });
-    const body = await res.json();
+    const res = await api<{ id: string }>("/api/runs", { method: "POST", body: { a, b, goal } });
     if (!res.ok) {
-      setError(body.error ?? "Could not start the run.");
+      setError(res.error);
       setBusy(false);
       return;
     }
-    router.push(`/runs/${body.id}/chat`);
+    router.push(`/runs/${res.body.id}/chat`);
   }
 
   const pick = (value: string, set: (v: string) => void) => (
@@ -58,7 +58,8 @@ export default function StartForm({
         <textarea rows={3} value={goal} onChange={(e) => setGoal(e.target.value)} />
       </label>
       {error && <p className="error">{error}</p>}
-      <button onClick={start} disabled={busy || a === b}>
+      {a === b && <p className="muted">Pick two different people.</p>}
+      <button onClick={start} disabled={busy || a === b || !goal.trim()}>
         {busy ? "Starting..." : "Let the twins talk"}
       </button>
     </div>

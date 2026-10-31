@@ -1,54 +1,30 @@
 "use client";
 
-import { use, useEffect, useRef, useState } from "react";
+import { use, useState } from "react";
 import type { RunView } from "../../../lib/runs";
+import { api, useRun } from "../../../lib/client";
 
 const STAGES = ["researching", "negotiating", "mediating", "ratifying", "scoring", "done"];
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
 export default function RunPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [run, setRun] = useState<RunView | null>(null);
-  const [error, setError] = useState("");
-  const alive = useRef(true);
+  // The server drives the run on its own. This page only watches, and nudges a run that has stalled.
+  const { run, setRun, error } = useRun(id, 4000);
 
-  // The server drives the run on its own. This page only watches, and nudges a run that has stalled
-  // (for example if a step crashed) so it picks up again.
-  useEffect(() => {
-    alive.current = true;
-    let lastChange = Date.now();
-    let lastKey = "";
-    const loop = async () => {
-      while (alive.current) {
-        const res = await fetch(`/api/runs/${id}`, { cache: "no-store" });
-        const body = await res.json();
-        if (!res.ok) return setError(body.error);
-        const current = body as RunView;
-        if (alive.current) setRun(current);
-        if (current.stage === "done" || current.stage === "error") return;
-        const key = `${current.stage}:${current.transcript.length}`;
-        if (key !== lastKey) {
-          lastKey = key;
-          lastChange = Date.now();
-        } else if (Date.now() - lastChange > 300_000) {
-          lastChange = Date.now();
-          fetch(`/api/runs/${id}/step`, { method: "POST" }).catch(() => {});
-        }
-        await new Promise((r) => setTimeout(r, 4000));
-      }
-    };
-    loop();
-    return () => {
-      alive.current = false;
-    };
-  }, [id]);
-
-  if (error) return <section className="card"><p className="error">{error}</p></section>;
+  if (error)
+    return (
+      <section className="card">
+        <p className="error">{error === "Not found" ? "This run does not exist, or it is not one of yours." : error}</p>
+        <a className="button-link" href="/">Back to your matches</a>
+      </section>
+    );
   if (!run) return <p className="muted">Loading...</p>;
   const name = (s: "a" | "b") => (s === "a" ? run.a.name : run.b.name);
   const o = run.outcome;
-  // Without auth (local demo) there is no signed-in founder, so both decision boxes show.
-  const deciders = run.party ? [run.party === "a" ? run.a : run.b] : [run.a, run.b];
+  // Without auth (local demo) there is no signed-in founder, so both decision boxes show. A signed-in
+  // onlooker (an admin watching someone else's run) cannot decide, so they get none.
+  const deciders = run.party ? [run.party === "a" ? run.a : run.b] : run.viewer ? [] : [run.a, run.b];
 
   return (
     <>
@@ -250,13 +226,16 @@ function DecisionBox({
 }) {
   const [note, setNote] = useState(existing?.note ?? "");
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState("");
 
   async function decide(decision: "accept" | "reject" | "modify") {
+    if (decision === "modify" && !note.trim()) return setError("Say what you would change first.");
     setError("");
-    const res = await fetch(`/api/runs/${runId}/decision`, { method: "POST", body: JSON.stringify({ owner: owner.id, decision, note }) });
-    const body = await res.json();
-    if (!res.ok) setError(body.error);
-    else onSaved(body);
+    setBusy(decision);
+    const res = await api<RunView>(`/api/runs/${runId}/decision`, { method: "POST", body: { owner: owner.id, decision, note } });
+    setBusy("");
+    if (!res.ok) setError(res.error);
+    else onSaved(res.body);
   }
 
   return (
@@ -265,9 +244,9 @@ function DecisionBox({
       {existing && <p className="muted">Chose {existing.decision}. You can change it.</p>}
       <textarea rows={2} placeholder="Anything you would change (needed for modify)" value={note} onChange={(e) => setNote(e.target.value)} />
       <div className="row">
-        <button onClick={() => decide("accept")}>Accept</button>
-        <button className="secondary" onClick={() => decide("modify")}>Modify</button>
-        <button className="danger" onClick={() => decide("reject")}>Reject</button>
+        <button onClick={() => decide("accept")} disabled={!!busy}>{busy === "accept" ? "Saving..." : "Accept"}</button>
+        <button className="secondary" onClick={() => decide("modify")} disabled={!!busy}>{busy === "modify" ? "Saving..." : "Modify"}</button>
+        <button className="danger" onClick={() => decide("reject")} disabled={!!busy}>{busy === "reject" ? "Saving..." : "Reject"}</button>
       </div>
       {error && <p className="error">{error}</p>}
     </div>

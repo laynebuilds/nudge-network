@@ -4,6 +4,7 @@ import { webScrape, webSearch } from "../../../../lib/firecrawl";
 import { extractAboutOwner, linkedinPublic, renderExtract, xPublic } from "../../../../lib/social";
 import { session } from "../../../../lib/auth";
 import type { HistoryItem } from "../../../../lib/schemas";
+import { LINK_FIELDS, type LinkField } from "../../../../lib/links";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -31,7 +32,8 @@ export async function POST(req: Request) {
   const me = await session(req);
   if (!me?.id) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   const id = me.id;
-  const { links } = (await req.json()) as { links?: string };
+  // field (optional) names the profile field this link came from, so its read result is kept next to it.
+  const { links, field } = ((await req.json().catch(() => null)) ?? {}) as { links?: string; field?: string };
   const urls = [...new Set((links ?? "").match(/https?:\/\/[^\s,]+/g) ?? [])].slice(0, 8);
   if (!urls.length) return NextResponse.json({ error: "Paste at least one full link starting with https://" }, { status: 400 });
 
@@ -65,6 +67,10 @@ export async function POST(req: Request) {
     if (!r.item) continue;
     profile.items = profile.items.filter((x) => x.id !== r.item!.id);
     profile.items.push(r.item);
+  }
+  if (field && (LINK_FIELDS as readonly string[]).includes(field) && results[0]) {
+    const { url, ok, note } = results[0];
+    profile.links_read = { ...profile.links_read, [field as LinkField]: { url, ok, note, at: new Date().toISOString() } };
   }
   await saveProfile(id, profile);
   return NextResponse.json({ results: results.map(({ item: _i, ...r }) => r), total: profile.items.length });

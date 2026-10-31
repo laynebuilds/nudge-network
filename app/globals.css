@@ -45,6 +45,11 @@ main.wide { max-width: none; padding: 0; }
 footer { border-top: 1px solid var(--line); }
 .foot-in { max-width: 1240px; margin: 0 auto; padding: 28px; display: flex; flex-wrap: wrap; gap: 10px 24px; color: var(--muted); font-size: 14px; }
 .foot-in span:first-child { margin-right: auto; font-weight: 600; color: var(--ink); }
+.foot-links { display: flex; gap: 18px; }
+
+/* Privacy and terms */
+.legal .card h2 { font-size: 22px; }
+.legal .card p:last-child, .legal .card ul:last-child { margin-bottom: 0; }
 
 /* Type */
 h1, h2, h3 { margin: 0; letter-spacing: -.045em; line-height: .98; font-weight: 600; text-wrap: balance; }
@@ -337,6 +342,7 @@ summary { cursor: pointer; color: var(--muted); font-size: 13px; }
 .r-btns button { padding: 7px 14px; font-size: 13px; }
 .r-btns button.text { background: none; border-color: transparent; color: var(--muted); }
 .r-done { margin: 0; font-size: 13.5px; color: var(--ink); }
+.r-decided { align-items: center; justify-content: space-between; gap: 12px; }
 @media (max-width: 900px) {
   .inbox { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: 580px; }
   .ib-list { display: flex; gap: 4px; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--line); scrollbar-width: none; }

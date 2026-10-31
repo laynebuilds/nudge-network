@@ -91,11 +91,19 @@ const THREADS: Thread[] = [
 
 const STATUS = { needs: "Needs you", live: "Talking", booked: "Booked", passed: "Passed" } as const;
 
+// What each proposal button does to the demo: the reply shown, and the status the thread moves to.
+const DECISIONS = {
+  accept: { text: "Accepted. Maya's twin is telling her now.", status: "booked" },
+  modify: { text: "Sent back to your twin with changes. It will reopen the terms with Maya's twin.", status: "live" },
+  pass: { text: "Passed. Maya won't hear a thing.", status: "passed" },
+} as const;
+type Decision = keyof typeof DECISIONS;
+
 export default function Inbox() {
   const [sel, setSel] = useState(0);
   const [auto, setAuto] = useState(true);
   const [tick, setTick] = useState(0);
-  const [decided, setDecided] = useState<string | null>(null);
+  const [decided, setDecided] = useState<Decision | null>(null);
 
   // Every thread reveals one more line per tick, staggered so they don't move in lockstep.
   useEffect(() => {
@@ -115,6 +123,13 @@ export default function Inbox() {
     const start = live ? 0 : th.lines.length - 2;
     const n = start + Math.max(0, tick - i);
     return live ? (n % (th.lines.length + 2)) : Math.min(th.lines.length, n);
+  };
+
+  // Deciding on a proposal settles that thread, so the list and header reflect the choice.
+  const statusOf = (t: Thread) => (t.status === "needs" && decided ? DECISIONS[decided].status : t.status);
+  const decide = (d: Decision) => {
+    setAuto(false);
+    setDecided(d);
   };
 
   const th = THREADS[sel];
@@ -138,18 +153,20 @@ export default function Inbox() {
           const last = [...t.lines.slice(0, k)].reverse().find((l) => l.kind === "them" || l.kind === "you") as
             | { kind: "them" | "you"; text: string }
             | undefined;
+          const st = statusOf(t);
           const isTyping = t.status === "live" && k < t.lines.length && t.lines[k].kind !== "act";
           return (
             <button
               key={t.id}
-              className={`ib-item ${i === sel ? "on" : ""} ${t.status}`}
+              className={`ib-item ${i === sel ? "on" : ""} ${st}`}
+              aria-pressed={i === sel}
               onClick={() => {
                 setAuto(false);
                 setSel(i);
               }}
             >
               <span className="ib-row">
-                <i className={`st ${t.status}`} />
+                <i className={`st ${st}`} />
                 <b>{t.name}</b>
                 <span className="ib-tag">{t.tag}</span>
                 <span className="ib-time">{t.time}</span>
@@ -164,7 +181,7 @@ export default function Inbox() {
         <div className="ib-head">
           <b>{th.name}&apos;s twin</b>
           <span className="ib-tag">{th.tag}</span>
-          <span className={`ib-state ${th.status}`}>{STATUS[th.status]}</span>
+          <span className={`ib-state ${statusOf(th)}`}>{STATUS[statusOf(th)]}</span>
         </div>
         <div className="ib-body" ref={body}>
           {th.lines.slice(0, n).map((l, i) =>
@@ -187,12 +204,17 @@ export default function Inbox() {
                   })}
                 </dl>
                 {decided ? (
-                  <p className="r-done">{decided}</p>
+                  <div className="r-btns r-decided">
+                    <p className="r-done">{DECISIONS[decided].text}</p>
+                    <button className="text" onClick={() => setDecided(null)}>
+                      Undo
+                    </button>
+                  </div>
                 ) : (
                   <div className="r-btns">
-                    <button onClick={() => setDecided("Accepted. Maya's twin is telling her now.")}>Accept</button>
-                    <button className="secondary" onClick={() => setDecided("Sent back to your twin with changes.")}>Modify</button>
-                    <button className="text" onClick={() => setDecided("Passed. Maya won't hear a thing.")}>Pass</button>
+                    <button onClick={() => decide("accept")}>Accept</button>
+                    <button className="secondary" onClick={() => decide("modify")}>Modify</button>
+                    <button className="text" onClick={() => decide("pass")}>Pass</button>
                   </div>
                 )}
               </div>

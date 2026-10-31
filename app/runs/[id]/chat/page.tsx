@@ -1,7 +1,8 @@
 "use client";
 
-import { use, useEffect, useRef, useState } from "react";
+import { use, useEffect, useRef } from "react";
 import type { RunView } from "../../../../lib/runs";
+import { useRun } from "../../../../lib/client";
 
 const initials = (name: string) =>
   name
@@ -14,28 +15,15 @@ const initials = (name: string) =>
 // iMessage-style view of a run: one phone per twin, the same conversation seen from each side.
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [run, setRun] = useState<RunView | null>(null);
-  const [error, setError] = useState("");
+  const { run, error } = useRun(id);
 
-  useEffect(() => {
-    let alive = true;
-    const loop = async () => {
-      while (alive) {
-        const res = await fetch(`/api/runs/${id}`, { cache: "no-store" });
-        const body = await res.json();
-        if (!res.ok) return setError(body.error);
-        if (alive) setRun(body);
-        if (body.stage === "done" || body.stage === "error") return;
-        await new Promise((r) => setTimeout(r, 3000));
-      }
-    };
-    loop();
-    return () => {
-      alive = false;
-    };
-  }, [id]);
-
-  if (error) return <p className="error">{error}</p>;
+  if (error)
+    return (
+      <section className="card">
+        <p className="error">{error === "Not found" ? "This run does not exist, or it is not one of yours." : error}</p>
+        <a className="button-link" href="/">Back to your matches</a>
+      </section>
+    );
   if (!run) return <p className="muted">Loading...</p>;
 
   return (

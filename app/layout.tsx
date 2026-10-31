@@ -23,6 +23,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <footer>
             <div className="foot-in">
               <span>Jebln</span>
+              <span className="foot-links">
+                <a href="/privacy">Privacy</a>
+                <a href="/terms">Terms</a>
+              </span>
               <span>
                 Built by <a href="https://github.com/laynebuilds">Layne Singh</a> and{" "}
                 <a href="https://github.com/jasnoorkaur111">Jasnoor Kaur</a>

@@ -99,12 +99,15 @@ export function viewFor(run: Run, viewerId: string | null, admin: boolean) {
   const full = bothDecided || (!party && admin);
   const { founders: _f, histories: _h, lockUntil: _l, ...rest } = run;
   void _f; void _h; void _l;
-  if (full) return { ...rest, party, full };
+  // viewer lets the page tell a signed-in onlooker (who cannot decide) from the local demo (who decides for both).
+  const viewer = viewerId;
+  if (full) return { ...rest, party, full, viewer };
 
   return {
     ...rest,
     party,
     full,
+    viewer,
     transcript: run.transcript.map((e) =>
       e.side === party ? e : { ...e, turn: { ...e.turn, private_reasoning: "", evidence: [], owner_questions: [], terms: [] } }
     ),

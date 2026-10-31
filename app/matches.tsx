@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { api } from "../lib/client";
 
 type Match = { id: string; name: string; score: number; why: string; goal: string; demo: boolean };
 
@@ -9,29 +10,39 @@ type Match = { id: string; name: string; score: number; why: string; goal: strin
 export default function Matches({ me }: { me: string }) {
   const router = useRouter();
   const [matches, setMatches] = useState<Match[] | null>(null);
+  const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
 
-  const load = (refresh = false) =>
-    fetch(`/api/matches${refresh ? "?refresh=1" : ""}`, { cache: "no-store" })
-      .then((r) => r.json())
-      .then((b) => setMatches(b.matches ?? []));
+  async function load(refresh = false) {
+    setError("");
+    setMatches(null);
+    const res = await api<{ matches: Match[] }>(`/api/matches${refresh ? "?refresh=1" : ""}`);
+    if (!res.ok) return setError(res.error);
+    setMatches(res.body.matches ?? []);
+  }
   useEffect(() => {
     load();
   }, []);
 
   async function connect(m: Match) {
     setBusy(m.id);
-    const res = await fetch("/api/runs", { method: "POST", body: JSON.stringify({ a: me, b: m.id, goal: m.goal }) });
-    const body = await res.json();
-    if (res.ok) router.push(`/runs/${body.id}/chat`);
-    else setBusy("");
+    setError("");
+    const res = await api<{ id: string }>("/api/runs", { method: "POST", body: { a: me, b: m.id, goal: m.goal } });
+    if (res.ok) return router.push(`/runs/${res.body.id}/chat`);
+    setError(res.error);
+    setBusy("");
   }
 
   return (
     <section className="card">
       <h2>Your best matches</h2>
       <p className="muted">Your twin ranks everyone on the network by synergy and talks to the strongest matches first.</p>
-      {!matches && <p className="muted">Your twin is reading the network...</p>}
+      {!matches && !error && <p className="muted">Your twin is reading the network...</p>}
+      {matches?.length === 0 && (
+        <p className="muted">
+          No matches yet. <a href="/me">Teach your twin more about you</a>, then re-rank.
+        </p>
+      )}
       <ul className="matches">
         {matches?.map((m) => (
           <li key={m.id}>
@@ -46,7 +57,12 @@ export default function Matches({ me }: { me: string }) {
           </li>
         ))}
       </ul>
-      {matches && <button className="secondary" onClick={() => { setMatches(null); load(true); }}>Re-rank</button>}
+      {error && <p className="error">{error}</p>}
+      {(matches || error) && (
+        <button className="secondary" onClick={() => load(true)} disabled={!!busy}>
+          {error && !matches ? "Try again" : "Re-rank"}
+        </button>
+      )}
     </section>
   );
 }

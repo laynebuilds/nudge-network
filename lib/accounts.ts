@@ -21,9 +21,8 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(
 export async function createFounderForClerk(userId: string, name: string, bio: string): Promise<string> {
   const { saveProfile } = await import("./founders");
   const id = `${slug(name)}-${userId.slice(-6).toLowerCase()}`;
+  // saveProfile also adds the new id to the registry.
   await saveProfile(id, { name, public_bio: bio, items: [] });
-  const ids = await registeredIds();
-  if (!ids.includes(id)) await writeJson(REGISTRY, [...ids, id]);
   await linkClerk(userId, id);
   return id;
 }
