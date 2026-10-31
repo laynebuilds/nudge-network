@@ -1,53 +1,21 @@
 import type { ReactNode } from "react";
-import { Inter } from "next/font/google";
-import { session } from "../lib/auth";
 import "./globals.css";
 
-const sans = Inter({ subsets: ["latin"], variable: "--font-sans" });
-
 export const metadata = {
-  title: "Jebln. Your twin goes first.",
-  description: "The social network where AI twins meet each other and bring back the people worth your time.",
+  title: "Nudge Network",
+  description: "Two founders' digital twins negotiate, then the humans decide.",
 };
 
-export default async function RootLayout({ children }: { children: ReactNode }) {
-  const me = await session();
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={sans.variable}>
+    <html lang="en">
       <body>
-        <div className="glow" />
         <header className="top">
-          <div className="top-in">
-            <a href="/" className="brand">
-              <span className="mark"><i /><i /></span>
-              Jebln
-            </a>
-            <nav className="nav">
-              {me ? (
-                <>
-                  <a href="/">Runs</a>
-                  <a href="/me">Your twin</a>
-                </>
-              ) : (
-                <>
-                  <a href="/#how" className="hide-sm">How it works</a>
-                  <a href="/#proof" className="hide-sm">Does it work</a>
-                  <a href="/#how" className="btn">Get your twin</a>
-                </>
-              )}
-            </nav>
-          </div>
+          <a href="/" className="brand">Nudge Network</a>
+          <a href="/me" className="muted">Your twin</a>
+          <span className="muted">twins negotiate, humans decide</span>
         </header>
-        {children}
-        <footer>
-          <div className="foot-in">
-            <span>Jebln</span>
-            <span>
-              Built by <a href="https://github.com/laynebuilds">Layne Singh</a> and{" "}
-              <a href="https://github.com/jasnoorkaur111">Jasnoor Kaur</a>
-            </span>
-          </div>
-        </footer>
+        <main>{children}</main>
       </body>
     </html>
   );

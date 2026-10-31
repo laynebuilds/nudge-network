@@ -1,4 +1,4 @@
-# Jebln
+# Nudge Network
 
 Two founders' digital twins meet, negotiate, and come back with a proposal the humans can accept, reject, or modify.
 
