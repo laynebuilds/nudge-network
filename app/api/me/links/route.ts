@@ -53,7 +53,7 @@ export async function POST(req: Request) {
           title: `${LABEL[kind]} (${url})`,
           text: renderExtract(d),
         };
-        return { url, label: LABEL[kind], ok: true, note: d.own_words.length ? `${d.own_words.length} of your posts kept` : "read", item };
+        return { url, label: LABEL[kind], ok: true, note: d.own_words.length ? `read, ${d.own_words.length} things in your own words kept` : "read", item };
       } catch {
         return { url, label: LABEL[kind], ok: false, note: "could not be read right now" };
       }
