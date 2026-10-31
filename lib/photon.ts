@@ -82,6 +82,39 @@ export async function notifyOpportunity(run: Run): Promise<string[]> {
 }
 
 // YES / NO, or a sentence about what to change (anything longer than a couple of words counts as that).
+// Both founders have decided: tell both of them, and when both said yes, open the door by sharing the next
+// step and each other's number (saying yes to the intro is the consent for that).
+export async function announceBoth(run: Run) {
+  const ask = askOf(run)?.ask ?? run.outcome?.headline ?? "";
+  for (const [me, other] of [
+    [run.a, run.b],
+    [run.b, run.a],
+  ] as const) {
+    const mine = run.decisions[me.id]?.decision;
+    const theirs = run.decisions[other.id]?.decision;
+    const phone = (await getProfile(me.id)).phone;
+    const convo = phone && (await conversationWith(phone));
+    if (!convo || !mine || !theirs) continue;
+    const otherPhone = (await getProfile(other.id)).phone;
+    const text =
+      mine === "accept" && theirs === "accept"
+        ? [
+            `${other.name} said yes too. You're both in.`,
+            "",
+            `Next step: ${ask}`,
+            ...(otherPhone ? ["", `Reach ${other.name.split(" ")[0]} directly at ${otherPhone}.`] : []),
+            "",
+            `${publicUrl()}/runs/${run.id}/chat`,
+          ].join("\n")
+        : theirs === "reject"
+          ? `${other.name} passed on this one. Nothing else happens, and your twin keeps looking. ${publicUrl()}`
+          : theirs === "modify"
+            ? `${other.name} would change something: ${run.decisions[other.id]!.note}. ${publicUrl()}/runs/${run.id}`
+            : `Both of you have decided. ${publicUrl()}/runs/${run.id}`;
+    await send(convo.spaceId, convo.senderId, text, `both:${run.id}:${me.id}`);
+  }
+}
+
 export function parseDecision(text: string): { decision: "accept" | "reject" | "modify"; note: string } | null {
   const t = text.trim();
   if (/^(yes|y|yep|yeah|accept|go ahead|sure|ok|okay)\b/i.test(t)) return { decision: "accept", note: t.replace(/^\S+\W*/, "").replace(/^\W+$/, "") };
@@ -99,19 +132,26 @@ export async function processInbound(): Promise<number> {
   const fresh = (await received(50)).filter((m) => !seen.has(m.id) && m.content.type === "text" && m.receivedBy).reverse();
   if (!fresh.length) return 0;
 
-  const phones = new Map<string, string>();
+  // One phone can belong to several twins (test sign-ups), so map a number to all of them and act on the
+  // conversation that actually texted this person most recently and is still waiting on them.
+  const phones = new Map<string, Set<string>>();
   for (const f of await listFounders()) {
     const phone = (await getProfile(f.id)).phone;
-    if (phone) phones.set(normalizePhone(phone), f.id);
+    if (!phone) continue;
+    const key = normalizePhone(phone);
+    if (!phones.has(key)) phones.set(key, new Set());
+    phones.get(key)!.add(f.id);
   }
   for (const m of fresh) {
     seen.add(m.id);
-    const ownerId = phones.get(normalizePhone(m.sentBy.handle));
-    if (!ownerId) continue;
+    const owners = phones.get(normalizePhone(m.sentBy.handle));
+    if (!owners) continue;
     const reply = (text: string) => send(m.space.id, m.receivedBy!.id, text, `reply:${m.id}`);
     const parsed = parseDecision(m.content.text ?? "");
-    const pending = (await listRuns()).find((r) => r.stage === "done" && (r.a.id === ownerId || r.b.id === ownerId) && !r.decisions[ownerId]);
-    if (!pending) {
+    const runs = (await listRuns()).filter((r) => r.stage === "done");
+    const pending = runs.find((r) => (r.notified ?? []).some((id) => owners.has(id) && !r.decisions[id]));
+    const ownerId = pending ? (pending.notified ?? []).find((id) => owners.has(id) && !pending.decisions[id])! : null;
+    if (!pending || !ownerId) {
       if (parsed) await reply(`Nothing is waiting for your decision right now. ${publicUrl()}`);
       continue;
     }
@@ -124,13 +164,12 @@ export async function processInbound(): Promise<number> {
     await saveRun(run);
     const other = run.a.id === ownerId ? run.b : run.a;
     const said = parsed.decision === "accept" ? "you're in" : parsed.decision === "reject" ? "you passed" : `you'd change: ${parsed.note}`;
-    await reply(
-      `Got it, ${said}. ${
-        run.decisions[other.id]
-          ? `${other.name} has decided too, so everything is open now: ${publicUrl()}/runs/${run.id}`
-          : `I will let you know when ${other.name} decides.`
-      }`
-    );
+    if (!run.decisions[other.id]) {
+      await reply(`Got it, ${said}. I will let you know when ${other.name} decides.`);
+      continue;
+    }
+    await reply(`Got it, ${said}.`);
+    await announceBoth(run);
   }
   await writeJson("photon/processed.json", [...seen].slice(-500));
   return fresh.length;

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { getRun, saveRun, viewFor } from "../../../../../lib/runs";
 import { session } from "../../../../../lib/auth";
 
@@ -23,5 +23,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (decision === "modify" && !note?.trim()) return NextResponse.json({ error: "Say what you would change" }, { status: 400 });
   run.decisions[owner] = { decision, note: note?.trim() ?? "", at: new Date().toISOString() };
   await saveRun(run);
+  // The second decision closes the loop over iMessage for both founders.
+  const other = run.a.id === owner ? run.b : run.a;
+  if (run.decisions[other.id]) {
+    after(async () => {
+      const { announceBoth, photonEnabled } = await import("../../../../../lib/photon");
+      if (photonEnabled()) await announceBoth(run).catch((err) => console.error("Photon announce failed", err));
+    });
+  }
   return NextResponse.json(viewFor(run, me.id ?? owner, me.admin));
 }
