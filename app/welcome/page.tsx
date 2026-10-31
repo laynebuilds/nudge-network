@@ -6,6 +6,11 @@ import { Textarea } from "@/components/ui/textarea";
 import Planet from "../landing/planet";
 import Plasma from "../landing/plasma";
 import { RoughSvg } from "@/components/ui/textarea-utils/RoughSvg";
+import TwinOverview from "@/components/twin/TwinOverview";
+import MatchList from "@/components/twin/MatchList";
+import { TwinBuildOverlay, chipLabels } from "../me/twin-build";
+import { api, type ApiResult } from "@/lib/client";
+import type { Founder } from "@/lib/schemas";
 
 // Sketch fields draw in the current text color, so they read on the plasma and on paper alike.
 const INK = "currentColor";
@@ -19,6 +24,10 @@ const PRIVATE_QS = [
   "How many hours a week can you give right now?",
 ];
 const STEPS = ["You", "Looking for", "Lines", "Texts"];
+// After Finish: the twin builds for real (up to a minute), shows itself, then who it wants to meet.
+const BUILD_MAX_MS = 60_000;
+const BUILD_STAGES = ["Building your twin"];
+type LinksRead = ApiResult<{ results: { ok: boolean }[] }>;
 // Links are typed as just the username; the prefix is shown and added for them.
 const SOCIALS = [
   { key: "linkedin", prefix: "linkedin.com/in/", base: "https://www.linkedin.com/in/", placeholder: "yourname" },
@@ -51,11 +60,23 @@ export default function Welcome() {
   const [answers, setAnswers] = useState(["", "", ""]);
   const [phone, setPhone] = useState("");
 
+  const [founder, setFounder] = useState<Founder | null>(null);
+  const [beat, setBeat] = useState<"build" | "twin" | "meet">("build");
+  const [chips, setChips] = useState<string[]>([]);
+  const linksJob = useRef<Promise<LinksRead> | null>(null);
+  const started = useRef(false);
+  const [linksDone, setLinksDone] = useState(false);
+  const [researchDone, setResearchDone] = useState(false);
+  const [found, setFound] = useState(0);
+  const [ranked, setRanked] = useState<number | null>(null);
+  const [workDone, setWorkDone] = useState(false);
+
   useEffect(() => {
     fetch("/api/me", { cache: "no-store" })
       .then((r) => r.json())
       .then((b) => {
         if (!b.founder) return setErr(b.error ?? "Sign in with your invite link.");
+        setFounder(b.founder);
         setName(b.founder.owner.name ?? "");
         setBio(b.founder.owner.public_bio ?? "");
         setPhone(b.phone ?? "");
@@ -74,7 +95,27 @@ export default function Welcome() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [step]);
+  }, [step, beat]);
+
+  // Finish starts the real build: links, web research and match ranking run side by side, and the
+  // overview is rewritten once what was read has landed. Any of them may fail; the build still ends.
+  useEffect(() => {
+    if (step !== STEPS.length || started.current) return;
+    started.current = true;
+    setChips(chipLabels(founder?.items ?? [], linkFields));
+    const job: Promise<LinksRead | null> = linksJob.current ?? (links.trim() ? readLinks(links) : Promise.resolve(null));
+    const read = job.then((r) => {
+      if (r?.ok) setFound((n) => n + r.body.results.filter((x) => x.ok).length);
+      setLinksDone(true);
+    });
+    const research = api<{ facts: unknown[] }>("/api/me/research", { method: "POST" }).then((r) => {
+      if (r.ok) setFound((n) => n + r.body.facts.length);
+      setResearchDone(true);
+    });
+    const matches = api<{ matches: unknown[] }>("/api/matches?refresh=1").then((r) => setRanked(r.ok ? r.body.matches.length : 0));
+    const overview = Promise.all([read, research]).then(() => api("/api/me/overview?refresh=1"));
+    Promise.all([matches, overview]).then(() => setWorkDone(true));
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function next() {
     setErr("");
@@ -83,7 +124,8 @@ export default function Welcome() {
       if (step === 0) {
         await put("/api/me", { name, public_bio: bio, links: linkFields });
         // Reading links takes a minute or two, so it runs in the background while they carry on.
-        if (links.trim()) fetch("/api/me/links", { method: "POST", body: JSON.stringify({ links }) }).catch(() => {});
+        // Kept so Finish can wait on it instead of reading the links twice.
+        if (links.trim()) linksJob.current = readLinks(links);
       }
       if (step === 1 && (looking.length || yes.trim())) {
         const text = [looking.length && `Looking for: ${looking.join(", ")}.`, yes.trim() && `What makes it a yes: ${yes.trim()}`]
@@ -116,15 +158,53 @@ export default function Welcome() {
     </main>
   );
 
+  if (step === STEPS.length && beat === "build") {
+    const things = `${found} thing${found === 1 ? "" : "s"}`;
+    const status = !linksDone
+      ? handleOf(handles.linkedin) ? "Reading your LinkedIn" : "Reading your links"
+      : !researchDone
+        ? found ? `Found ${things} about you. Searching the web for more` : "Searching the web for you"
+        : ranked === null
+          ? `Found ${things} about you. Ranking founders for you`
+          : `Ranked ${ranked} founder${ranked === 1 ? "" : "s"}. Writing how your twin describes you`;
+    return shell(
+      <TwinBuildOverlay
+        chips={chips}
+        stages={BUILD_STAGES}
+        duration={BUILD_MAX_MS}
+        done={workDone}
+        status={status}
+        onReady={() => setBeat("twin")}
+        onClose={() => setBeat("twin")}
+      />
+    );
+  }
+
+  if (step === STEPS.length && beat === "twin") {
+    return shell(
+      <div className="ob-done ob-wide">
+        <Planet size={64} />
+        <h1>Here&apos;s your twin</h1>
+        <p className="lead">This is how it will introduce you to other founders&apos; twins. Fix anything that&apos;s off before it meets anyone.</p>
+        <div className="ob-panel">
+          <TwinOverview />
+        </div>
+        <div className="ob-actions">
+          <button className="ob-primary" onClick={() => setBeat("meet")}>Continue</button>
+        </div>
+      </div>
+    );
+  }
+
   if (step === STEPS.length) {
     return shell(
-      <div className="ob-done">
-        <Planet size={64} />
-        <h1>Your twin is ready.</h1>
-        <p className="lead">It&apos;s reading what you gave it and will start meeting other founders&apos; twins. You&apos;ll hear from it when there&apos;s a decision.</p>
+      <div className="ob-done ob-wide">
+        <h1>Who your twin wants to meet first</h1>
+        <p className="lead">Ranked from everything it knows about you. Say the word and it opens these conversations for you.</p>
+        <div className="ob-panel">{founder && <MatchList me={founder.owner.id} limit={3} startAllLabel="Let my twin start these 3" />}</div>
         <div className="ob-actions">
-          <a className="btn white" href="/">Open your inbox</a>
-          <a className="ob-link" href="/me">Teach it more</a>
+          <a className="btn white" href="/">Go to home</a>
+          <a className="ob-link" href="/">Pick myself</a>
         </div>
       </div>
     );
@@ -300,6 +380,11 @@ function e164(raw: string) {
   if (d.length === 10) return `+1${d}`;
   if (d.length === 11 && d.startsWith("1")) return `+${d}`;
   return `+${d}`;
+}
+
+// Reading links takes a minute or two; the result says how many were read.
+function readLinks(links: string): Promise<LinksRead> {
+  return api<{ results: { ok: boolean }[] }>("/api/me/links", { method: "POST", body: { links } });
 }
 
 async function put(url: string, body: unknown) {
