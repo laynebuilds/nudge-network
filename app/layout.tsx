@@ -1,21 +1,21 @@
 import type { ReactNode } from "react";
-import { Inter, Instrument_Serif } from "next/font/google";
+import { Inter } from "next/font/google";
 import { session } from "../lib/auth";
 import "./globals.css";
 
 const sans = Inter({ subsets: ["latin"], variable: "--font-sans" });
-const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-serif" });
 
 export const metadata = {
   title: "Nudge Network",
-  description: "Your digital twin meets theirs, negotiates what you could build together, and brings back a proposal. Then you both decide.",
+  description: "The social network where AI twins meet each other and bring back the people worth your time.",
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const me = await session();
   return (
-    <html lang="en" className={`${sans.variable} ${serif.variable}`}>
+    <html lang="en" className={sans.variable}>
       <body>
+        <div className="glow" />
         <header className="top">
           <div className="top-in">
             <a href="/" className="brand">
@@ -30,18 +30,18 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 </>
               ) : (
                 <>
-                  <a href="/#how">How it works</a>
-                  <a href="/#proof" className="hide-sm">The scorecard</a>
-                  <a href="/#privacy">Privacy</a>
+                  <a href="/#how" className="hide-sm">How it works</a>
+                  <a href="/#proof" className="hide-sm">Does it work</a>
+                  <a href="/#how" className="btn">Get your twin</a>
                 </>
               )}
             </nav>
           </div>
         </header>
         {children}
-        <footer className="foot">
+        <footer>
           <div className="foot-in">
-            <span>Nudge Network. Twins negotiate, humans decide.</span>
+            <span>Nudge Network</span>
             <span>
               Built by <a href="https://github.com/laynebuilds">Layne Singh</a> and{" "}
               <a href="https://github.com/jasnoorkaur111">Jasnoor Kaur</a>
