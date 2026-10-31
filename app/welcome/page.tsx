@@ -12,6 +12,15 @@ const PRIVATE_QS = [
   "How many hours a week can you give right now?",
 ];
 const STEPS = ["You", "Looking for", "Lines", "Texts"];
+// Links are typed as just the username; the prefix is shown and added for them.
+const SOCIALS = [
+  { key: "linkedin", prefix: "linkedin.com/in/", base: "https://www.linkedin.com/in/", placeholder: "yourname" },
+  { key: "x", prefix: "x.com/", base: "https://x.com/", placeholder: "handle" },
+  { key: "instagram", prefix: "instagram.com/", base: "https://www.instagram.com/", placeholder: "handle" },
+] as const;
+// Accept a pasted full link or an @handle and keep only the username.
+const handleOf = (v: string) =>
+  v.trim().replace(/^https?:\/\//, "").replace(/^(www\.)?(linkedin\.com\/in|x\.com|twitter\.com|instagram\.com)\//, "").replace(/^@/, "").split(/[/?#]/)[0];
 
 export default function Welcome() {
   const [step, setStep] = useState(0);
@@ -20,7 +29,14 @@ export default function Welcome() {
 
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
-  const [links, setLinks] = useState("");
+  const [handles, setHandles] = useState<Record<string, string>>({ linkedin: "", x: "", instagram: "" });
+  const [site, setSite] = useState("");
+  const links = [
+    ...SOCIALS.filter((x) => handles[x.key]).map((x) => x.base + handles[x.key]),
+    site.trim() && (/^https?:\/\//.test(site.trim()) ? site.trim() : `https://${site.trim()}`),
+  ]
+    .filter(Boolean)
+    .join("\n");
   const [looking, setLooking] = useState<string[]>([]);
   const [yes, setYes] = useState("");
   const [lines, setLines] = useState<string[]>(["", ""]);
@@ -110,10 +126,33 @@ export default function Welcome() {
             <p className="lead">Your twin starts here. Other twins see this, so keep it true.</p>
             <label>Name<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Jasnoor Kaur" autoFocus /></label>
             <label>What you&apos;re building, in one line<input value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Founder of Obeo. Weather and travel forecasts for athletes." /></label>
-            <label>
-              <span>Your links <span className="opt">optional</span></span>
-              <textarea rows={2} value={links} onChange={(e) => setLinks(e.target.value)} placeholder="LinkedIn, X, your website" />
-            </label>
+            <div className="links-in">
+              <span className="links-label">Your links <span className="opt">optional</span></span>
+              {SOCIALS.map((x) => (
+                <label key={x.key} className="prefixed">
+                  <span className="pre">{x.prefix}</span>
+                  <input
+                    value={handles[x.key]}
+                    placeholder={x.placeholder}
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    onChange={(e) => setHandles({ ...handles, [x.key]: handleOf(e.target.value) })}
+                  />
+                </label>
+              ))}
+              <label className="prefixed">
+                <span className="pre">https://</span>
+                <input
+                  value={site}
+                  placeholder="yourcompany.com"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  onChange={(e) => setSite(e.target.value.replace(/^https?:\/\//, ""))}
+                />
+              </label>
+            </div>
             <p className="hint">Your twin reads these in the background and keeps only what&apos;s about you.</p>
           </>
         )}

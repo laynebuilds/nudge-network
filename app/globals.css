@@ -470,3 +470,12 @@ main.app-main { max-width: 1180px; padding: 96px 20px 40px; }
 .ob-done { display: grid; justify-items: center; gap: 14px; text-align: center; width: min(560px, 100%); animation: fadeUp .4s both; }
 .ob-done .lead { margin: 0 auto; }
 .ob-done .ob-actions { justify-content: center; }
+.links-in { display: grid; gap: 8px; }
+.links-label { font-size: 14px; font-weight: 500; }
+.prefixed { display: flex; align-items: center; gap: 0; border: 1px solid var(--line-2); border-radius: 14px; background: #fff; overflow: hidden; }
+.prefixed:focus-within { border-color: var(--ink); box-shadow: 0 0 0 4px rgba(23, 18, 28, .08); }
+.prefixed .pre { padding: 14px 0 14px 16px; color: var(--muted); font-size: 16px; white-space: nowrap; font-weight: 400; }
+.ob-card .prefixed input { border: none; box-shadow: none; background: transparent; padding-left: 1px; min-width: 0; }
+.ob-card .prefixed input:focus { box-shadow: none; }
+.ob-card .prefixed { gap: 0; display: flex; }
+.prefixed .pre { color: var(--ink-2); }
