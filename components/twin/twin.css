@@ -69,3 +69,11 @@ main.twin-home { max-width: 720px; padding: 110px 20px 80px; }
 /* Inbox with no conversations: the match column fills the right pane and scrolls inside it. */
 .ib-matches { flex: 1; overflow-y: auto; padding: 24px 16px; }
 .ib-matches > .muted { max-width: 640px; margin: 0 auto 14px; }
+
+/* Cards always use dark ink, even on the dark plasma pages (/welcome, landing) that set white text. */
+.twin-card, .twin-card * { color: var(--ink, #17121c); }
+.twin-card .muted, .twin-card .twin-goal, .twin-card .twin-score, .twin-card .eyebrow, .twin-card .twin-src, .twin-card .twin-coverage { color: var(--muted, #6b6670); }
+.twin-card .twin-why { color: var(--ink-2, #3a3540); }
+.twin-card .twin-red, .twin-card .twin-red * { color: #b3261e; }
+.twin-card button:not(.secondary):not(.ghost), .twin-card .button-link:not(.secondary) { color: #fff; }
+.twin-card .pill { color: inherit; }
