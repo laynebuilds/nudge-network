@@ -431,3 +431,10 @@ details.more > .card { border: none; padding: 16px 0 0; margin: 0; }
   .runs .names { font-size: 17px; }
   .runs .names i { font-size: 14px; margin: 0 4px; }
 }
+
+/* Phone only: the signed-out nav keeps the logo and the two account buttons; the section links live on the page. */
+@media (max-width: 640px) {
+  .nav:has(.r) .links { display: none; }
+  .nav .r { gap: 4px; }
+  .nav .r button { padding: 8px 12px; font-size: 13px; white-space: nowrap; }
+}
