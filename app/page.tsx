@@ -8,6 +8,7 @@ import Story from "./landing/story";
 import Hero from "./landing/hero";
 import Reveal from "./landing/reveal";
 import Inbox from "./landing/inbox";
+import Plasma from "./landing/plasma";
 
 export const dynamic = "force-dynamic";
 
@@ -81,6 +82,7 @@ export default async function Home() {
 function Landing() {
   return (
     <main className="wide landing">
+      <Plasma />
       <Reveal />
       <section className="hero">
         <div className="media" aria-hidden>
