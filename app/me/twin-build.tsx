@@ -418,9 +418,9 @@ function TwinBuild({
       // 1. Source: the rotating figure in brand colours on nothing.
       sctx.clearRect(0, 0, w, h);
       const aura = sctx.createRadialGradient(hx, hy, 0, hx, hy, scale * (0.35 + pulse * 0.15));
-      aura.addColorStop(0, `rgba(255,232,194,${Math.min(1, 0.55 * glow)})`);
-      aura.addColorStop(0.4, `rgba(244,157,55,${0.3 * glow})`);
-      aura.addColorStop(1, "rgba(244,157,55,0)");
+      aura.addColorStop(0, `rgba(230,235,255,${Math.min(1, 0.55 * glow)})`);
+      aura.addColorStop(0.4, `rgba(61,90,254,${0.3 * glow})`);
+      aura.addColorStop(1, "rgba(61,90,254,0)");
       sctx.fillStyle = aura;
       sctx.fillRect(0, 0, w, h);
       const D = 3.2;
@@ -436,11 +436,11 @@ function TwinBuild({
         const built = y < buildY ? 1 : y < buildY + 0.08 ? 1.6 : 0.22;
         const near = Math.exp(-Math.hypot(x, y - 0.42, z) * 4) * glow;
         const lum = Math.min(1, (0.6 + depth * 0.4) * built + near * 0.5);
-        // Warm orange in the shadows, cream where it is lit.
+        // Electric blue in the shadows, blue-white where it is lit.
         const k = Math.min(1, depth * 0.6 + near);
-        const r = 244 + (255 - 244) * k;
-        const g = 157 + (232 - 157) * k;
-        const b = 55 + (194 - 55) * k;
+        const r = 31 + (230 - 31) * k;
+        const g = 59 + (235 - 59) * k;
+        const b = 209 + (255 - 209) * k;
         sctx.fillStyle = `rgba(${r | 0},${g | 0},${b | 0},${lum})`;
         const sz = dot * f;
         sctx.fillRect(cx + rx * scale * f - sz / 2, cy - y * scale * f - sz / 2, sz, sz);
@@ -472,8 +472,8 @@ function TwinBuild({
         const py = (1 - e) * (1 - e) * sy + 2 * (1 - e) * e * my + e * e * hy;
         const fade = Math.min(1, u / 0.15) * (u > 0.72 ? 1 - (u - 0.72) / 0.28 : 1);
         const comet = sctx.createRadialGradient(px, py, 0, px, py, 14);
-        comet.addColorStop(0, `rgba(255,232,194,${0.9 * fade})`);
-        comet.addColorStop(1, "rgba(244,157,55,0)");
+        comet.addColorStop(0, `rgba(230,235,255,${0.9 * fade})`);
+        comet.addColorStop(1, "rgba(61,90,254,0)");
         sctx.fillStyle = comet;
         sctx.fillRect(px - 14, py - 14, 28, 28);
         const sc = 1 - Math.max(0, u - 0.6) * 1.4;
@@ -486,12 +486,12 @@ function TwinBuild({
         const ph = fs + 12;
         tctx.beginPath();
         tctx.roundRect(-pw / 2, -ph / 2, pw, ph, ph / 2);
-        tctx.fillStyle = "rgba(22,11,11,.78)";
+        tctx.fillStyle = "rgba(5,6,15,.78)";
         tctx.fill();
-        tctx.strokeStyle = "rgba(244,157,55,.7)";
+        tctx.strokeStyle = "rgba(61,90,254,.7)";
         tctx.lineWidth = 1;
         tctx.stroke();
-        tctx.fillStyle = "#FFE8C2";
+        tctx.fillStyle = "#E6EBFF";
         tctx.fillText(c.label, -tw / 2, 0.5);
         tctx.restore();
       }
