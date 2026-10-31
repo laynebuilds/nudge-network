@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
 import Planet from "./planet";
 
 // Over the landing hero the nav is transparent with white text, then it floats as a pill once you scroll.
@@ -10,6 +11,7 @@ export default function SiteNav({ signedIn }: { signedIn: boolean }) {
   const path = usePathname();
   const landing = !signedIn && path === "/";
   const [scrolled, setScrolled] = useState(false);
+  const { isSignedIn } = useUser();
 
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 40);
@@ -28,6 +30,7 @@ export default function SiteNav({ signedIn }: { signedIn: boolean }) {
         <div className="links">
           <a href="/">Runs</a>
           <a href="/me">Your twin</a>
+          {isSignedIn && <UserButton />}
         </div>
       ) : (
         <>
@@ -37,7 +40,12 @@ export default function SiteNav({ signedIn }: { signedIn: boolean }) {
             <a href="/#proof">Does it work</a>
           </div>
           <div className="r">
-            <a href="/#join" className="fill">Get your twin</a>
+            <SignInButton mode="modal">
+              <button className="ghost">Sign in</button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <button className="fill">Get your twin</button>
+            </SignUpButton>
           </div>
         </>
       )}

@@ -393,3 +393,7 @@ details.more > .card { border: none; padding: 16px 0 0; margin: 0; }
 @media (max-width: 600px) { .matches li { grid-template-columns: 44px 1fr; } .matches li button { grid-column: 1 / -1; } }
 .match-score { font-size: 22px; font-weight: 700; color: var(--accent); text-align: center; }
 .match-body p { margin: 2px 0; font-size: 14px; }
+.nav .r { display: flex; gap: 8px; align-items: center; }
+.nav .r button { border: none; border-radius: 999px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; background: #fff; color: var(--ink); font-family: inherit; }
+.nav .r button.ghost { background: transparent; color: inherit; }
+.nav .links { display: flex; align-items: center; gap: 16px; }

@@ -61,8 +61,10 @@ export async function saveSealed(id: string, sealed: SealedIntent) {
 }
 
 export async function listFounders(): Promise<FounderSummary[]> {
+  const { registeredIds } = await import("./accounts");
+  const ids = [...new Set([...seedIds(), ...(await registeredIds())])];
   return Promise.all(
-    seedIds().map(async (id) => {
+    ids.map(async (id) => {
       const f = await loadFounder(id);
       return {
         id,

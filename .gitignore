@@ -12,3 +12,4 @@ runs/*.json
 .vercel
 .env*.local
 .env*
+.clerk/

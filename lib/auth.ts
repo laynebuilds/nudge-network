@@ -39,9 +39,23 @@ export const authEnabled = () => !!process.env.FOUNDER_TOKENS;
 
 export type Session = { id: string | null; admin: boolean };
 
-// null means "not signed in" when auth is enabled.
+// null means "not signed in" when auth is enabled. Invite links (cookie or Bearer) come first, then Clerk.
 export async function session(req?: Request): Promise<Session | null> {
   if (!authEnabled()) return { id: null, admin: true };
-  const id = await viewer(req);
+  const id = (await viewer(req)) ?? (await clerkFounder());
   return id ? { id, admin: isAdmin(id) } : null;
+}
+
+// A Clerk sign-in becomes a founder: linked one if it exists, otherwise a new twin named after the account.
+async function clerkFounder(): Promise<string | null> {
+  if (!process.env.CLERK_SECRET_KEY) return null;
+  const { auth, currentUser } = await import("@clerk/nextjs/server");
+  const { userId } = await auth();
+  if (!userId) return null;
+  const { founderForClerk, createFounderForClerk } = await import("./accounts");
+  const existing = await founderForClerk(userId);
+  if (existing) return existing;
+  const user = await currentUser();
+  const name = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || user?.username || "New founder";
+  return createFounderForClerk(userId, name, "");
 }
