@@ -28,7 +28,7 @@ export default function SiteNav({ signedIn }: { signedIn: boolean }) {
       </a>
       {signedIn ? (
         <div className="links">
-          <a href="/">Runs</a>
+          <a href="/">Inbox</a>
           <a href="/me">Your twin</a>
           {isSignedIn && <UserButton />}
         </div>
@@ -43,7 +43,7 @@ export default function SiteNav({ signedIn }: { signedIn: boolean }) {
             <SignInButton mode="modal">
               <button className="ghost">Sign in</button>
             </SignInButton>
-            <SignUpButton mode="modal">
+            <SignUpButton mode="modal" forceRedirectUrl="/welcome">
               <button className="fill">Get your twin</button>
             </SignUpButton>
           </div>

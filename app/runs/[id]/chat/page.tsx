@@ -45,8 +45,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         ))}
       </div>
       <div className="phones">
-        <Phone run={run} side="a" hiddenOnPhone={(shown ?? run.party ?? "a") !== "a"} />
-        <Phone run={run} side="b" hiddenOnPhone={(shown ?? run.party ?? "a") !== "b"} />
+        <Phone key={shown ?? run.party ?? "a"} run={run} side={shown ?? run.party ?? "a"} hiddenOnPhone={false} />
       </div>
       <p className="chat-links">
         <a href={`/runs/${run.id}`}>Full run, scorecard and decision</a>
@@ -93,8 +92,8 @@ function Phone({ run, side, hiddenOnPhone }: { run: RunView; side: "a" | "b"; hi
     <section className={`phone${hiddenOnPhone ? " off-phone" : ""}`} aria-label={`${me.name}'s twin`}>
       <header className="phone-head">
         <span className="avatar">{initials(other.name)}</span>
-        <b>{other.name}&apos;s twin</b>
-        <span className="phone-sub">seen by {me.name}&apos;s twin</span>
+        <b>{other.name.split(" ")[0]}&apos;s twin</b>
+        <span className="phone-sub">on {me.name.split(" ")[0]}&apos;s twin&apos;s phone</span>
       </header>
       <div className="thread">
         {run.stage === "researching" && (
@@ -120,6 +119,7 @@ function Phone({ run, side, hiddenOnPhone }: { run: RunView; side: "a" | "b"; hi
           const prev = run.transcript[i - 1];
           return (
             <div key={i} className={`msg ${mine ? "out" : "in"} ${prev?.side === e.side ? "cont" : ""}`}>
+              {prev?.side !== e.side && <span className="sender">{mine ? `${me.name.split(" ")[0]}'s twin` : `${other.name.split(" ")[0]}'s twin`}</span>}
               {e.turn.message
                 .split(/\n+/)
                 .map((line) => line.trim())
