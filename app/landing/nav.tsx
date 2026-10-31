@@ -9,7 +9,7 @@ import Planet from "./planet";
 // Everywhere else it is the floating pill from the start.
 export default function SiteNav({ signedIn }: { signedIn: boolean }) {
   const path = usePathname();
-  const landing = !signedIn && path === "/";
+  const landing = (!signedIn && path === "/") || (path === "/" && typeof window !== "undefined" && window.location.search.includes("landing"));
   const [scrolled, setScrolled] = useState(false);
   const { isSignedIn } = useUser();
 
@@ -22,7 +22,7 @@ export default function SiteNav({ signedIn }: { signedIn: boolean }) {
 
   return (
     <header className={`nav ${landing ? "over" : ""} ${!landing || scrolled ? "float" : ""}`}>
-      <a href="/" className="logo">
+      <a href={signedIn ? "/?landing" : "/"} className="logo">
         <Planet size={24} />
         Jebln
       </a>

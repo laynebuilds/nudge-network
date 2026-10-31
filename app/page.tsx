@@ -12,9 +12,10 @@ import Plasma from "./landing/plasma";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ landing?: string }> }) {
   const me = await session();
-  if (!me) return <Landing />;
+  // The logo always opens the landing page, signed in or not (?landing=1); "Home" in the nav is the dashboard.
+  if (!me || (await searchParams).landing !== undefined) return <Landing />;
 
   // Signed-in home: one column with what your twin knows, who it wants to meet and how it is going.
   // Local development without auth has no founder id, so only the conversations show.
