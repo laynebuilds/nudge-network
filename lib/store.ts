@@ -1,15 +1,37 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { get, head, list, put, BlobNotFoundError, BlobPreconditionFailedError } from "@vercel/blob";
+import { Redis } from "@upstash/redis";
 
 // JSON storage. Private Vercel Blob in production (BLOB_READ_WRITE_TOKEN set), local .data/ otherwise.
 // Every read bypasses the CDN cache so polling sees fresh run state.
-const useBlob = () => !!process.env.BLOB_READ_WRITE_TOKEN;
+// Upstash Redis when connected (preferred: Blob's free tier ran out of read operations), then Blob, then local.
+const redisUrl = () => process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
+const redisToken = () => process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
+let redisClient: Redis | null = null;
+const redis = () => (redisClient ??= new Redis({ url: redisUrl()!, token: redisToken()!, automaticDeserialization: false }));
+const useRedis = () => !!(redisUrl() && redisToken());
+const useBlob = () => !useRedis() && !!process.env.BLOB_READ_WRITE_TOKEN;
+
+// Each key is a hash: d = the JSON text exactly as written, v = version used as the etag for conditional
+// writes. The JSON stays a plain string so nothing is re-encoded (Lua's cjson would turn [] into {}).
+// Atomic compare-and-set: write only if the stored version still matches (or always when none given).
+const CAS = `local v = tonumber(redis.call("HGET", KEYS[1], "v") or "0")
+if ARGV[2] ~= "" and tostring(v) ~= ARGV[2] then return 0 end
+redis.call("HSET", KEYS[1], "v", v + 1, "d", ARGV[1])
+return 1`;
 const LOCAL = join(process.cwd(), ".data");
 
 export type Stored<T> = { data: T; etag: string | null };
 
 export async function readJson<T>(path: string): Promise<Stored<T> | null> {
+  if (useRedis()) {
+    const rec = (await redis().hmget(path, "v", "d")) as Record<string, string | null> | null;
+    const v = rec?.v ?? null;
+    const d = rec?.d ?? null;
+    if (d == null) return null;
+    return { data: JSON.parse(d) as T, etag: String(v ?? "0") };
+  }
   if (!useBlob()) {
     const p = join(LOCAL, path);
     return existsSync(p) ? { data: JSON.parse(readFileSync(p, "utf8")) as T, etag: null } : null;
@@ -38,6 +60,10 @@ async function headEtag(path: string): Promise<string | null> {
 
 // ifMatch makes the write conditional: it fails with false if someone else wrote first.
 export async function writeJson(path: string, data: unknown, opts: { ifMatch?: string | null } = {}): Promise<boolean> {
+  if (useRedis()) {
+    const ok = await redis().eval(CAS, [path], [JSON.stringify(data ?? null), opts.ifMatch ?? ""]);
+    return Number(ok) === 1;
+  }
   const body = JSON.stringify(data, null, 2);
   if (!useBlob()) {
     const p = join(LOCAL, path);
@@ -62,6 +88,16 @@ export async function writeJson(path: string, data: unknown, opts: { ifMatch?: s
 }
 
 export async function listJson(prefix: string): Promise<string[]> {
+  if (useRedis()) {
+    const out: string[] = [];
+    let cursor: string | number = 0;
+    do {
+      const [next, keys]: [string | number, string[]] = await redis().scan(cursor, { match: `${prefix}*`, count: 500 });
+      out.push(...keys);
+      cursor = next;
+    } while (String(cursor) !== "0");
+    return out;
+  }
   if (!useBlob()) {
     const dir = join(LOCAL, prefix);
     return existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith(".json")).map((f) => join(prefix, f)) : [];
