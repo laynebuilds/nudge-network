@@ -13,7 +13,7 @@ const Incoming = z.array(HistoryItem.partial({ id: true, ts: true }));
 // Add history items: one typed note from the app, or a batch uploaded from scripts/upload-history.mjs.
 export async function POST(req: Request) {
   const me = await session(req);
-  if (!me?.id) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
+  if (!me?.id) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   const body = await req.json();
   const parsed = Incoming.safeParse(Array.isArray(body) ? body : body.items ?? [body]);
   if (!parsed.success) return NextResponse.json({ error: "Items must have a source and some text." }, { status: 400 });
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   const me = await session(req);
-  if (!me?.id) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
+  if (!me?.id) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   const id = new URL(req.url).searchParams.get("id");
   const profile = await getProfile(me.id);
   profile.items = id === "all" ? [] : profile.items.filter((i) => i.id !== id);

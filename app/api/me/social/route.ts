@@ -33,7 +33,7 @@ async function publicContent(platform: Platform, url: string): Promise<string> {
 
 export async function POST(req: Request) {
   const me = await session(req);
-  if (!me?.id) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
+  if (!me?.id) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   const id = me.id;
   const { platform, url, text } = (await req.json()) as { platform?: Platform; url?: string; text?: string };
   if (!platform || !(platform in PLATFORMS)) return NextResponse.json({ error: "Pick LinkedIn, X or Instagram." }, { status: 400 });

@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 // fidelity signal there is: did the human sign what their twin agreed to?
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const me = await session(req);
-  if (!me) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
+  if (!me) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   const stored = await getRun((await params).id);
   if (!stored) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const run = stored.data;

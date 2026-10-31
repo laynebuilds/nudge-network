@@ -30,7 +30,16 @@ export default function MePage() {
     load();
   }, []);
 
-  if (error) return <section className="card"><p className="error">{error}</p></section>;
+  if (error)
+    return (
+      <section className="card">
+        <p>{error}</p>
+        <div className="row">
+          <a className="button-link" href="/sign-up">Get your twin</a>
+          <a className="button-link secondary" href="/sign-in">Sign in</a>
+        </div>
+      </section>
+    );
   if (!founder) return <p className="muted">Loading...</p>;
 
   return (
@@ -50,6 +59,11 @@ export default function MePage() {
         <History founder={founder} editable={editable} reload={load} />
       </details>
       <Sealed />
+      <section className="card next-step">
+        <h2>Your twin is ready to meet people</h2>
+        <p className="muted">It ranks everyone on the network by synergy. Pick a match and watch the twins talk.</p>
+        <a className="button-link" href="/">See your matches</a>
+      </section>
     </>
   );
 }

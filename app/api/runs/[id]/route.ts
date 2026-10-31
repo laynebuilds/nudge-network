@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   resumeStalled(req);
   const me = await session(req);
-  if (!me) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
+  if (!me) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   const stored = await getRun((await params).id);
   if (!stored) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const run = stored.data;

@@ -9,14 +9,14 @@ export const runtime = "nodejs";
 export async function GET(req: Request) {
   resumeStalled(req);
   const me = await session(req);
-  if (!me) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
+  if (!me) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   const runs = (await listRuns()).filter((r) => me.admin || r.a.id === me.id || r.b.id === me.id);
   return NextResponse.json({ runs: runs.map(({ id, createdAt, a, b, stage, goal }) => ({ id, createdAt, a, b, stage, goal })) });
 }
 
 export async function POST(req: Request) {
   const me = await session(req);
-  if (!me) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
+  if (!me) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   const { a, b, goal } = (await req.json()) as { a?: string; b?: string; goal?: string };
   const founders = await listFounders();
   const ids = new Set(founders.map((f) => f.id));

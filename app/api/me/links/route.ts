@@ -29,7 +29,7 @@ async function read(kind: Kind, url: string): Promise<string> {
 // says about you plus your own words.
 export async function POST(req: Request) {
   const me = await session(req);
-  if (!me?.id) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
+  if (!me?.id) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   const id = me.id;
   const { links } = (await req.json()) as { links?: string };
   const urls = [...new Set((links ?? "").match(/https?:\/\/[^\s,]+/g) ?? [])].slice(0, 8);

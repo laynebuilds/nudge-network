@@ -18,7 +18,7 @@ const Captions = z.object({
 // kept. The images themselves are never stored.
 export async function POST(req: Request) {
   const me = await session(req);
-  if (!me?.id) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
+  if (!me?.id) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   const parsed = Body.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: "Send 1 to 8 JPEG images at a time." }, { status: 400 });
   const { images } = parsed.data;

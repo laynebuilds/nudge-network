@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 
 export async function GET(req: Request) {
   const me = await session(req);
-  if (!me?.id) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
+  if (!me?.id) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   const id = me.id;
   const items = (await getProfile(id)).items;
   return NextResponse.json({
@@ -17,7 +17,7 @@ export async function GET(req: Request) {
 
 export async function PUT(req: Request) {
   const me = await session(req);
-  if (!me?.id) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
+  if (!me?.id) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   const id = me.id;
   const { answers } = (await req.json()) as { answers?: string[] };
   if (!Array.isArray(answers)) return NextResponse.json({ error: "Send answers as a list." }, { status: 400 });

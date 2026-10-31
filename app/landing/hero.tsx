@@ -44,7 +44,7 @@ export default function Hero() {
           Jebln builds an AI twin of you, the founder. It meets other founders&apos; twins and brings back <b>the people worth meeting.</b>
         </p>
         <div className="cta">
-          <a className="btn white" href="#join">Get your twin</a>
+          <a className="btn white" href="/sign-up">Get your twin</a>
           <a className="btn ghost" href="#how">How it works</a>
         </div>
       </div>

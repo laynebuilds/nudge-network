@@ -9,7 +9,7 @@ export const maxDuration = 180;
 // One click: the twin researches its owner on the web (Orbit-style signals) and keeps what it found.
 export async function POST(req: Request) {
   const me = await session(req);
-  if (!me?.id) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
+  if (!me?.id) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   const id = me.id;
   const d = await researchFounder(await loadFounder(id));
   const itemId = `${id}:doc:web-research`;

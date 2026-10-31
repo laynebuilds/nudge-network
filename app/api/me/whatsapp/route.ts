@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   const me = await session(req);
-  if (!me?.id) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
+  if (!me?.id) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   const { text, chat, myName } = (await req.json()) as { text?: string; chat?: string; myName?: string };
   if (!text?.trim()) return NextResponse.json({ error: "Upload the .txt from WhatsApp's Export chat." }, { status: 400 });
   const founder = await loadFounder(me.id);

@@ -8,13 +8,13 @@ export const runtime = "nodejs";
 // Only the owner reads or writes their sealed intent. No agent, and not the other founder, ever sees it.
 export async function GET(req: Request) {
   const me = await session(req);
-  if (!me?.id) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
+  if (!me?.id) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   return NextResponse.json((await loadSealed(me.id)) ?? { owner: me.id, red_lines: [], probes: [] });
 }
 
 export async function PUT(req: Request) {
   const me = await session(req);
-  if (!me?.id) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
+  if (!me?.id) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   const id = me.id;
   const parsed = SealedIntent.safeParse({ ...(await req.json()), owner: id });
   if (!parsed.success) return NextResponse.json({ error: "Red lines and probes are required." }, { status: 400 });

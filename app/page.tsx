@@ -176,7 +176,11 @@ function Landing() {
         <div className="in">
           <h2>Ready when you are.</h2>
           <div>
-            <p className="lead">Jebln is invite only, for early stage founders. Open your invite link to get your twin.</p>
+            <p className="lead">For early stage founders. Sign up, give your twin your links and a few photos, and it starts meeting the founders you have the most synergy with.</p>
+            <div className="cta">
+              <a className="btn white" href="/sign-up">Get your twin</a>
+              <a className="btn ghost" href="/sign-in">Sign in</a>
+            </div>
           </div>
         </div>
       </section>

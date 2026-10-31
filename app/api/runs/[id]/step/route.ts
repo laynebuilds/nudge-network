@@ -11,7 +11,7 @@ const BUDGET_MS = 150_000;
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const internal = isInternal(req);
   const me = internal ? { id: null, admin: true } : await session(req);
-  if (!me) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
+  if (!me) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   const id = (await params).id;
   const stored = await getRun(id);
   if (!stored || (!me.admin && stored.data.a.id !== me.id && stored.data.b.id !== me.id)) {
