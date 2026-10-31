@@ -83,7 +83,15 @@ function Phone({ run, side }: { run: RunView; side: "a" | "b" }) {
           const prev = run.transcript[i - 1];
           return (
             <div key={i} className={`msg ${mine ? "out" : "in"} ${prev?.side === e.side ? "cont" : ""}`}>
-              <div className="bubble-i">{e.turn.message}</div>
+              {e.turn.message
+                .split(/\n+/)
+                .map((line) => line.trim())
+                .filter(Boolean)
+                .map((line, j) => (
+                  <div key={j} className="bubble-i">
+                    {line}
+                  </div>
+                ))}
               {mine && e.turn.private_reasoning && (
                 <details className="why">
                   <summary>why</summary>

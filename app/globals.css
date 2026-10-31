@@ -126,3 +126,4 @@ details.more > .card { border: none; padding: 16px 0 0; margin: 0; }
 .link-results { list-style: none; padding: 0; margin: 4px 0 0; font-size: 14px; }
 .link-results .ok { color: var(--ok); }
 .link-results .bad { color: var(--bad); }
+.msg .bubble-i + .bubble-i { margin-top: 2px; }

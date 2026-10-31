@@ -22,7 +22,8 @@ export type NegotiationState = {
   revised: boolean;
 };
 
-export const MAX_TURNS = Number(process.env.NUDGE_MAX_TURNS ?? 12);
+// Short texts mean more back and forth, so the cap is higher than for long-form turns.
+export const MAX_TURNS = Number(process.env.NUDGE_MAX_TURNS ?? 24);
 
 const systems = (s: NegotiationState) => ({
   a: twinSystem(s.founders.a, s.founders.b.owner.name, s.goal) + renderDossier(s.founders.b.owner.name, s.dossiers?.b),
