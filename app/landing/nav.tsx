@@ -43,7 +43,7 @@ export default function SiteNav({ signedIn }: { signedIn: boolean }) {
             <SignInButton mode="modal">
               <button className="ghost">Sign in</button>
             </SignInButton>
-            <SignUpButton mode="modal">
+            <SignUpButton mode="modal" forceRedirectUrl="/welcome">
               <button className="fill">Get your twin</button>
             </SignUpButton>
           </div>

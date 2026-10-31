@@ -17,10 +17,11 @@ const SOCIALS = [
   { key: "linkedin", prefix: "linkedin.com/in/", base: "https://www.linkedin.com/in/", placeholder: "yourname" },
   { key: "x", prefix: "x.com/", base: "https://x.com/", placeholder: "handle" },
   { key: "instagram", prefix: "instagram.com/", base: "https://www.instagram.com/", placeholder: "handle" },
+  { key: "github", prefix: "github.com/", base: "https://github.com/", placeholder: "handle" },
 ] as const;
 // Accept a pasted full link or an @handle and keep only the username.
 const handleOf = (v: string) =>
-  v.trim().replace(/^https?:\/\//, "").replace(/^(www\.)?(linkedin\.com\/in|x\.com|twitter\.com|instagram\.com)\//, "").replace(/^@/, "").split(/[/?#]/)[0];
+  v.trim().replace(/^https?:\/\//, "").replace(/^(www\.)?(linkedin\.com\/in|x\.com|twitter\.com|instagram\.com|github\.com)\//, "").replace(/^@/, "").split(/[/?#]/)[0];
 
 export default function Welcome() {
   const [step, setStep] = useState(0);
@@ -29,14 +30,14 @@ export default function Welcome() {
 
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
-  const [handles, setHandles] = useState<Record<string, string>>({ linkedin: "", x: "", instagram: "" });
+  const [handles, setHandles] = useState<Record<string, string>>({ linkedin: "", x: "", instagram: "", github: "" });
   const [site, setSite] = useState("");
-  const links = [
-    ...SOCIALS.filter((x) => handles[x.key]).map((x) => x.base + handles[x.key]),
-    site.trim() && (/^https?:\/\//.test(site.trim()) ? site.trim() : `https://${site.trim()}`),
-  ]
-    .filter(Boolean)
-    .join("\n");
+  // Same fields /me uses, so the profile form shows them filled in.
+  const linkFields: Record<string, string> = {
+    ...Object.fromEntries(SOCIALS.map((x) => [x.key, handleOf(handles[x.key]) ? x.base + handleOf(handles[x.key]) : ""])),
+    website: site.trim() ? `https://${site.trim().replace(/^https?:\/\//, "")}` : "",
+  };
+  const links = Object.values(linkFields).filter(Boolean).join("\n");
   const [looking, setLooking] = useState<string[]>([]);
   const [yes, setYes] = useState("");
   const [lines, setLines] = useState<string[]>(["", ""]);
@@ -51,6 +52,9 @@ export default function Welcome() {
         setName(b.founder.owner.name ?? "");
         setBio(b.founder.owner.public_bio ?? "");
         setPhone(b.phone ?? "");
+        const l = b.links ?? {};
+        setHandles({ linkedin: handleOf(l.linkedin ?? ""), x: handleOf(l.x ?? ""), instagram: handleOf(l.instagram ?? ""), github: handleOf(l.github ?? "") });
+        setSite((l.website ?? "").replace(/^https?:\/\//, ""));
       });
     fetch("/api/me/sealed", { cache: "no-store" })
       .then((r) => r.json())
@@ -70,7 +74,7 @@ export default function Welcome() {
     setBusy(true);
     try {
       if (step === 0) {
-        await put("/api/me", { name, public_bio: bio });
+        await put("/api/me", { name, public_bio: bio, links: linkFields });
         // Reading links takes a minute or two, so it runs in the background while they carry on.
         if (links.trim()) fetch("/api/me/links", { method: "POST", body: JSON.stringify({ links }) }).catch(() => {});
       }
@@ -94,7 +98,7 @@ export default function Welcome() {
     setBusy(false);
   }
 
-  const canNext = [name.trim() && bio.trim(), true, lines.some((l) => l.trim()), true][step];
+  const canNext = [name.trim() && bio.trim() && handleOf(handles.linkedin), true, lines.some((l) => l.trim()), true][step];
 
   if (step === STEPS.length) {
     return (
@@ -127,7 +131,7 @@ export default function Welcome() {
             <label>Name<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Jasnoor Kaur" autoFocus /></label>
             <label>What you&apos;re building, in one line<input value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Founder of Obeo. Weather and travel forecasts for athletes." /></label>
             <div className="links-in">
-              <span className="links-label">Your links <span className="opt">optional</span></span>
+              <span className="links-label">Your links <span className="opt">LinkedIn is required, the rest are optional</span></span>
               {SOCIALS.map((x) => (
                 <label key={x.key} className="prefixed">
                   <span className="pre">{x.prefix}</span>
@@ -137,7 +141,8 @@ export default function Welcome() {
                     autoCapitalize="none"
                     autoCorrect="off"
                     spellCheck={false}
-                    onChange={(e) => setHandles({ ...handles, [x.key]: handleOf(e.target.value) })}
+                    onChange={(e) => setHandles({ ...handles, [x.key]: e.target.value })}
+                    onBlur={(e) => setHandles({ ...handles, [x.key]: handleOf(e.target.value) })}
                   />
                 </label>
               ))}
@@ -149,7 +154,8 @@ export default function Welcome() {
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
-                  onChange={(e) => setSite(e.target.value.replace(/^https?:\/\//, ""))}
+                  onChange={(e) => setSite(e.target.value)}
+                  onBlur={(e) => setSite(e.target.value.trim().replace(/^https?:\/\//, ""))}
                 />
               </label>
             </div>
