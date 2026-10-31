@@ -387,8 +387,8 @@ function Social({ reload }: { reload: () => void }) {
     <section className="card">
       <h2>Social profiles</h2>
       <p className="muted">
-        LinkedIn, X and Instagram block most automatic reading. The link pulls whatever is public about that exact profile;
-        pasting your own content is what gives your twin the real picture.
+        Paste your profile link: LinkedIn and X are read automatically, including your recent posts. Instagram blocks this,
+        so use the Send to my twin bookmark on your Instagram profile. The paste box is there for anything else.
       </p>
       {SOCIAL.map((p) => (
         <SocialRow key={p.id} platform={p} reload={reload} />
@@ -410,7 +410,8 @@ function SocialRow({ platform, reload }: { platform: (typeof SOCIAL)[number]; re
     const body = await res.json();
     if (!res.ok) return setMsg(body.error);
     const parts = [];
-    if (body.public !== undefined) parts.push(body.public ? `found ${body.public} characters public` : "nothing public found for that link");
+    if (body.error) parts.push(`could not read that link right now; use the Send to my twin bookmark on that page instead`);
+    else if (body.public !== undefined) parts.push(body.public ? `read your public profile${body.quotes ? ` and kept ${body.quotes} of your posts word for word` : ""}` : "nothing about you found at that link");
     if (body.pasted !== undefined) parts.push(`saved ${body.pasted} characters you pasted`);
     setMsg(parts.join(", ") + ".");
     reload();

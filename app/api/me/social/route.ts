@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getProfile, saveProfile } from "../../../../lib/founders";
-import { webScrape, webSearch } from "../../../../lib/firecrawl";
+import { webSearch } from "../../../../lib/firecrawl";
+import { extractAboutOwner, linkedinPublic, renderExtract, xPublic } from "../../../../lib/social";
+import { loadFounder } from "../../../../lib/founders";
 import { session } from "../../../../lib/auth";
 
 export const runtime = "nodejs";
@@ -15,27 +17,18 @@ type Platform = keyof typeof PLATFORMS;
 
 const handleOf = (url: string) => new URL(url).pathname.split("/").filter(Boolean).filter((p) => p !== "in").at(0) ?? "";
 
-// What logged-out visitors can see: a direct read where the site allows it (X sometimes does), otherwise
-// public search results that point at exactly this profile. Never other people with the same name.
-async function publicSnippet(platform: Platform, url: string): Promise<string> {
+// LinkedIn and X have reliable public sources (lib/social.ts). Instagram does not, so it falls back to
+// public search results that point at exactly this profile; the browser bookmark covers the rest.
+async function publicContent(platform: Platform, url: string): Promise<string> {
+  if (platform === "linkedin") return linkedinPublic(url);
+  if (platform === "x") return xPublic(url);
   const handle = handleOf(url).toLowerCase();
-  const parts: string[] = [];
-  try {
-    const page = await webScrape(url);
-    if (page.text.length > 200 && !/@unknown/.test(page.text)) parts.push(page.text.slice(0, 4000));
-  } catch {
-    // Blocked or unsupported; fall through to search.
-  }
-  try {
-    const hits = await webSearch(`site:${PLATFORMS[platform].host} ${handle}`, 6);
-    for (const h of hits) {
-      const path = new URL(h.url).pathname.toLowerCase();
-      if (path.split("/").includes(handle)) parts.push(`${h.title}\n${h.text}`.slice(0, 1500));
-    }
-  } catch {
-    // Search unavailable.
-  }
-  return parts.join("\n\n").slice(0, 6000);
+  const hits = await webSearch(`site:${PLATFORMS[platform].host} ${handle}`, 6).catch(() => []);
+  return hits
+    .filter((h) => new URL(h.url).pathname.toLowerCase().split("/").includes(handle))
+    .map((h) => `${h.title}\n${h.text}`)
+    .join("\n\n")
+    .slice(0, 6000);
 }
 
 export async function POST(req: Request) {
@@ -60,11 +53,27 @@ export async function POST(req: Request) {
     result.pasted = text.trim().length;
   }
   if (url) {
-    const snippet = await publicSnippet(platform, url);
+    let raw = "";
+    try {
+      raw = await publicContent(platform, url);
+    } catch (err) {
+      result.error = 1;
+      console.error(`${label} public read failed`, err);
+    }
     const itemId = `${id}:${platform}:public`;
     profile.items = profile.items.filter((x) => x.id !== itemId);
-    if (snippet) profile.items.push({ id: itemId, source: platform, ts: today, title: `${label}: public profile (${url})`, text: snippet });
-    result.public = snippet.length;
+    if (raw.trim()) {
+      const extracted = await extractAboutOwner(await loadFounder(id), label, raw);
+      if (extracted.about_owner) {
+        profile.items.push({ id: itemId, source: platform, ts: today, title: `${label}: public profile (${url})`, text: renderExtract(extracted) });
+        result.public = extracted.summary.length;
+        result.quotes = extracted.own_words.length;
+      } else {
+        result.public = 0;
+      }
+    } else {
+      result.public = 0;
+    }
   }
   await saveProfile(id, profile);
   return NextResponse.json(result);
