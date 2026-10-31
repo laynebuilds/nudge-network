@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Founder, SealedIntent } from "../../lib/schemas";
 
 const SOURCES = ["note", "imessage", "whatsapp", "email", "calendar", "photo", "doc"] as const;
@@ -37,6 +37,7 @@ export default function MePage() {
     <>
       <Profile founder={founder} phone={phone} />
       <About reload={load} />
+      <Bookmark />
       <Social reload={load} />
       <Connect reload={load} />
       <History founder={founder} editable={editable} reload={load} />
@@ -422,5 +423,36 @@ function SocialRow({ platform, reload }: { platform: (typeof SOCIAL)[number]; re
       <div className="row"><button onClick={save} disabled={!url && !text}>Save {platform.label}</button></div>
       {msg && <p className="muted">{msg}</p>}
     </div>
+  );
+}
+
+// Runs in the owner's own logged-in tab. It opens our capture page and hands it the page text by window
+// message, because LinkedIn, X and Instagram block scripts from calling other domains directly.
+const BOOKMARK = (origin: string) =>
+  `javascript:(()=>{const o=${JSON.stringify(origin)};const w=window.open(o+'/capture','nudge','width=520,height=640');` +
+  `const p={url:location.href,title:document.title,text:document.body.innerText.slice(0,70000),` +
+  `images:[...document.images].map(i=>i.alt).filter(a=>a&&a.length>20).slice(0,60)};` +
+  `const h=e=>{if(e.origin===o&&e.data&&e.data.type==='nudge-ready'){w.postMessage({type:'nudge-capture',page:p},o);removeEventListener('message',h)}};` +
+  `addEventListener('message',h)})()`;
+
+function Bookmark() {
+  const ref = useRef<HTMLAnchorElement>(null);
+  useEffect(() => {
+    // React refuses javascript: URLs in JSX, so the bookmark's address is set directly.
+    ref.current?.setAttribute("href", BOOKMARK(window.location.origin));
+  }, []);
+  return (
+    <section className="card">
+      <h2>Send pages to your twin from your browser</h2>
+      <p className="muted">
+        Works on LinkedIn, X, Instagram and any other page, because it reads what you already see while logged in.
+      </p>
+      <ol>
+        <li>Drag this button to your bookmarks bar: <a ref={ref} className="bookmarklet" onClick={(e) => e.preventDefault()}>Send to my twin</a></li>
+        <li>Open your LinkedIn profile (click &quot;see more&quot; on About), then click the bookmark and press Add.</li>
+        <li>Do the same on your LinkedIn activity page, your X profile scrolled through your recent posts, and your Instagram profile.</li>
+      </ol>
+      <p className="muted">Only what the page says about you is kept, plus your own posts and captions word for word.</p>
+    </section>
   );
 }
