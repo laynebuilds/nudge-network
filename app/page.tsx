@@ -1,7 +1,9 @@
-import { listFounders } from "../lib/founders";
-import { DEFAULT_GOAL } from "../lib/goal";
+import { loadFounder } from "../lib/founders";
 import { session } from "../lib/auth";
-import InboxApp from "./inbox-app";
+import TwinOverview from "../components/twin/TwinOverview";
+import MatchList from "../components/twin/MatchList";
+import RecentConversations from "../components/twin/RecentConversations";
+import "../components/twin/twin.css";
 import Story from "./landing/story";
 import Hero from "./landing/hero";
 import Reveal from "./landing/reveal";
@@ -14,21 +16,34 @@ export default async function Home() {
   const me = await session();
   if (!me) return <Landing />;
 
-  const founders = await listFounders();
-  const real = founders.filter((f) => !f.demo);
-  const choices = me.admin ? founders : founders.filter((f) => f.demo || f.id === me.id || !f.demo);
-  const defA = me.id ?? real[0]?.id ?? founders[0].id;
-  const defB = real.find((f) => f.id !== defA)?.id ?? founders.find((f) => f.id !== defA)!.id;
+  // Signed-in home: one column with what your twin knows, who it wants to meet and how it is going.
+  // Local development without auth has no founder id, so only the conversations show.
+  const name = me.id ? (await loadFounder(me.id).catch(() => null))?.owner.name : null;
+  const first = name?.split(" ")[0];
 
   return (
-    <main className="app-main">
-      <InboxApp
-        me={me.id}
-        founders={choices.map(({ id, name, demo }) => ({ id, name, demo }))}
-        defaultA={defA}
-        defaultB={defB}
-        defaultGoal={DEFAULT_GOAL}
-      />
+    <main className="twin-home">
+      <div className="twin-col">
+        <header className="twin-greet">
+          <h1>{first ? `Hi ${first}.` : "Your twin."}</h1>
+          <p>Here is what your twin knows, who it wants to meet, and how its conversations are going.</p>
+        </header>
+
+        {me.id && <TwinOverview compact />}
+
+        {me.id && (
+          <>
+            <h2 className="twin-section">Who it wants to meet</h2>
+            <MatchList me={me.id} limit={5} />
+          </>
+        )}
+
+        <h2 className="twin-section">Highlights</h2>
+        <RecentConversations me={me.id} limit={3} />
+        <p className="twin-inbox-link">
+          <a className="ob-link" href="/inbox">See every conversation in your inbox</a>
+        </p>
+      </div>
     </main>
   );
 }

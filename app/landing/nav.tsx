@@ -28,7 +28,8 @@ export default function SiteNav({ signedIn }: { signedIn: boolean }) {
       </a>
       {signedIn ? (
         <div className="links">
-          <a href="/">Inbox</a>
+          <a href="/">Home</a>
+          <a href="/inbox">Inbox</a>
           <a href="/me">Your twin</a>
           {isSignedIn && <UserButton />}
         </div>
