@@ -12,24 +12,29 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
   const [error, setError] = useState("");
   const alive = useRef(true);
 
-  // While this page is open it drives the run: each POST advances one step on the server.
+  // The server drives the run on its own. This page only watches, and nudges a run that has stalled
+  // (for example if a step crashed) so it picks up again.
   useEffect(() => {
     alive.current = true;
+    let lastChange = Date.now();
+    let lastKey = "";
     const loop = async () => {
-      const first = await fetch(`/api/runs/${id}`, { cache: "no-store" });
-      const body = await first.json();
-      if (!first.ok) return setError(body.error);
-      setRun(body);
-      let current = body as RunView;
-      while (alive.current && current.stage !== "done" && current.stage !== "error") {
-        const res = await fetch(`/api/runs/${id}/step`, { method: "POST" });
-        if (!res.ok) {
-          await new Promise((r) => setTimeout(r, 4000));
-          continue;
-        }
-        current = await res.json();
+      while (alive.current) {
+        const res = await fetch(`/api/runs/${id}`, { cache: "no-store" });
+        const body = await res.json();
+        if (!res.ok) return setError(body.error);
+        const current = body as RunView;
         if (alive.current) setRun(current);
-        await new Promise((r) => setTimeout(r, 1500));
+        if (current.stage === "done" || current.stage === "error") return;
+        const key = `${current.stage}:${current.transcript.length}`;
+        if (key !== lastKey) {
+          lastKey = key;
+          lastChange = Date.now();
+        } else if (Date.now() - lastChange > 300_000) {
+          lastChange = Date.now();
+          fetch(`/api/runs/${id}/step`, { method: "POST" }).catch(() => {});
+        }
+        await new Promise((r) => setTimeout(r, 4000));
       }
     };
     loop();
@@ -139,7 +144,7 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
 
       <section className="card">
         <h2>Conversation</h2>
-        {run.transcript.length === 0 && <p className="muted">The twins are getting started. Keep this page open.</p>}
+        {run.transcript.length === 0 && <p className="muted">The twins are getting started. You can close this page; they keep going without you.</p>}
         {run.transcript.map((e, i) => (
           <div key={i} className={`bubble ${e.side}`}>
             <div className="who">

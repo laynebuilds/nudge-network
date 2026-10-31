@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createRun, listRuns } from "../../../lib/runs";
 import { listFounders } from "../../../lib/founders";
 import { session } from "../../../lib/auth";
+import { continueInBackground } from "../../../lib/autorun";
 
 export const runtime = "nodejs";
 
@@ -26,5 +27,6 @@ export async function POST(req: Request) {
   const allowed = me.admin || [a, b].every((x) => demo.has(x)) || a === me.id || b === me.id;
   if (!allowed) return NextResponse.json({ error: "You can only start negotiations that include your own twin." }, { status: 403 });
   const run = await createRun(a, b, goal.trim(), me.id);
+  continueInBackground(req, run.id);
   return NextResponse.json({ id: run.id });
 }
