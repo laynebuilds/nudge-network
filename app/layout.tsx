@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 import { Inter } from "next/font/google";
 import { session } from "../lib/auth";
+import SiteNav from "./landing/nav";
 import "./globals.css";
 
 const sans = Inter({ subsets: ["latin"], variable: "--font-sans" });
+
 
 export const metadata = {
   title: "Jebln. Your twin goes first.",
@@ -15,29 +17,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="en" className={sans.variable}>
       <body>
-        <div className="glow" />
-        <header className="top">
-          <div className="top-in">
-            <a href="/" className="brand">
-              <span className="mark"><i /><i /></span>
-              Jebln
-            </a>
-            <nav className="nav">
-              {me ? (
-                <>
-                  <a href="/">Runs</a>
-                  <a href="/me">Your twin</a>
-                </>
-              ) : (
-                <>
-                  <a href="/#how" className="hide-sm">How it works</a>
-                  <a href="/#proof" className="hide-sm">Does it work</a>
-                  <a href="/#how" className="btn">Get your twin</a>
-                </>
-              )}
-            </nav>
-          </div>
-        </header>
+        <SiteNav signedIn={!!me} />
         {children}
         <footer>
           <div className="foot-in">

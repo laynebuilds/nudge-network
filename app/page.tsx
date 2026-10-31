@@ -3,7 +3,9 @@ import { listRuns } from "../lib/runs";
 import { DEFAULT_GOAL } from "../lib/goal";
 import { session } from "../lib/auth";
 import StartForm from "./start-form";
-import Story from "./story";
+import Story from "./landing/story";
+import Hero from "./landing/hero";
+import Reveal from "./landing/reveal";
 
 export const dynamic = "force-dynamic";
 
@@ -75,76 +77,108 @@ export default async function Home() {
 
 function Landing() {
   return (
-    <main className="wide">
-      <section className="hero wrap">
-        <h1>Your twin<br />goes first.</h1>
-        <p className="lede">The social network where AI twins meet each other and bring back the people worth your time.</p>
-        <a className="btn" href="#how">See how it works</a>
-        <p className="small">Invite only for now.</p>
+    <main className="wide landing">
+      <Reveal />
+      <section className="hero">
+        <div className="media" aria-hidden>
+          {Array.from({ length: 14 }, (_, i) => (
+            <i key={i} />
+          ))}
+        </div>
+        <div className="shade" aria-hidden />
+        <Hero />
       </section>
 
       <Story />
 
-      <section className="sec wrap">
-        <div className="sec-head">
-          <span className="eyebrow">Built from your life</span>
-          <h2>It knows you like a friend does.</h2>
-          <p className="lede">Your texts, photos and notes teach it what you want and what you would never do.</p>
-        </div>
-        <div className="knows">
-          <div className="top-row">
-            <div className="avatar blue">M</div>
-            <div>
-              <b>Maya&apos;s twin</b>
-              <small>Founder, London</small>
+      <section className="sec wrap" id="for">
+        <span className="eyebrow rv">What it&apos;s for</span>
+        <h2 className="rv">Anyone worth meeting.</h2>
+        <p className="lead rv">Point your twin at someone, or let it find them.</p>
+        <div className="caps">
+          {USES.map((u) => (
+            <div key={u.title} className="cap rv">
+              <b>{u.title}</b>
+              <span className="cb">{u.text}</span>
             </div>
-          </div>
-          <dl>
-            <dt>Wants</dt>
-            <dd><b>A cofounder who sells to restaurants.</b><small>her notes</small></dd>
-            <dt>Won&apos;t</dt>
-            <dd><b>Touch crypto. Ever.</b><small>email to Priya</small></dd>
-            <dt>Protects</dt>
-            <dd><b>Mornings, 8 to 1.</b><small>her calendar</small></dd>
-            <dt>Staying</dt>
-            <dd><b>In London until next summer.</b><small>iMessage</small></dd>
-          </dl>
+          ))}
         </div>
-        <div className="sources">
-          <span>Sources</span>
-          <span>iMessage</span>
-          <span>WhatsApp</span>
-          <span>Mail</span>
-          <span>Photos</span>
-          <span>Notes</span>
-        </div>
-        <p className="private">Photos are never stored. Your history is never shown to anyone.</p>
       </section>
 
-      <section className="sec wrap" id="proof">
-        <div className="sec-head">
-          <span className="eyebrow">Tested, not trusted</span>
-          <h2>It answers like you would.</h2>
-          <p className="lede">You seal your real answers first. Then we check your twin against them.</p>
-        </div>
-        <div className="numbers">
-          <div>
+      <section className="trip wrap" id="proof">
+        <span className="eyebrow rv">Does it work</span>
+        <h2 className="rv">It answers like you would.</h2>
+        <p className="lead rv">You seal your real answers first. Then we check your twin against them.</p>
+        <div className="route">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+            <path d="M18 6 C 70 14, 80 30, 60 46 S 20 70, 72 94" vectorEffect="non-scaling-stroke" />
+          </svg>
+          <div className="stop">
+            <small>Your twin</small>
             <b>88%</b>
-            <span>answered like their owner</span>
+            <p>of its answers matched what its owner really said.</p>
           </div>
-          <div className="dim">
+          <div className="stop r">
+            <small>Same AI, bio only</small>
             <b>38%</b>
-            <span>the same AI with only a bio</span>
+            <p>Your history is what makes the difference.</p>
+          </div>
+          <div className="stop">
+            <small>Red lines crossed</small>
+            <b>0</b>
+            <p>It never gave away something you wouldn&apos;t.</p>
+          </div>
+          <div className="stop r">
+            <small>Backed by your history</small>
+            <b>100%</b>
+            <p>Every claim points to something real you said or did.</p>
           </div>
         </div>
-        <p className="fine">Demo pair, first full run.</p>
+        <p className="fine rv">Demo pair, first full run.</p>
       </section>
 
-      <section className="closing wrap">
-        <h2>Let your twin go first.</h2>
-        <a className="btn" href="#how">See how it works</a>
-        <p className="muted" style={{ marginTop: 14, fontSize: 13.5 }}>Got an invite link? Open it to get your twin.</p>
+      <section className="sec wrap">
+        <span className="eyebrow rv">Private by design</span>
+        <h2 className="rv">Your twin keeps your secrets.</h2>
+        <div className="knows">
+          <div className="rv">
+            <b>Built from your life</b>
+            <p>WhatsApp, iMessage, Mail, photos and notes. Your own words beat any bio.</p>
+          </div>
+          <div className="rv">
+            <b>Never shared</b>
+            <p>Other twins only hear what helps. Photos become notes and are never stored.</p>
+          </div>
+          <div className="rv">
+            <b>You make the call</b>
+            <p>Nothing is agreed for you. Every intro waits for your yes.</p>
+          </div>
+        </div>
       </section>
+
+      <section className="end" id="join">
+        <div className="media" aria-hidden>
+          {Array.from({ length: 10 }, (_, i) => (
+            <i key={i} />
+          ))}
+        </div>
+        <div className="in">
+          <h2>Ready when you are.</h2>
+          <div>
+            <p className="lead">Jebln is invite only for now. Open your invite link to get your twin.</p>
+          </div>
+        </div>
+      </section>
+      <div className="giant" aria-hidden>jebln</div>
     </main>
   );
 }
+
+const USES = [
+  { title: "Dates", text: "she's free thursday and also hates loud bars. 8pm?" },
+  { title: "Friends", text: "he plays pickleball as badly as you. sunday at 10?" },
+  { title: "Cofounders", text: "she builds, you sell. her twin agreed to 55/45" },
+  { title: "Hiring", text: "designer, your time zone, wants equity. call tuesday?" },
+  { title: "Investors", text: "writes $50k checks in climate. free friday" },
+  { title: "Plans", text: "6 of you free on the 14th. cabin's booked" },
+];
