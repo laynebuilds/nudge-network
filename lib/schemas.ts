@@ -58,6 +58,12 @@ export const Outcome = z.object({
   unresolved: z.array(
     z.object({ question: z.string(), for_owner: z.enum(["a", "b", "both"]), why: z.string() })
   ),
+  decision: z
+    .object({
+      needed: z.boolean().describe("True only if there is a concrete next step both humans should say yes or no to"),
+      ask: z.string().describe("One sentence: the exact thing a founder agrees to by saying yes, e.g. 'Book a 30 minute call next week to compare notes on payment agents.' Empty if not needed."),
+    })
+    .describe("What, if anything, the humans are being asked to approve"),
 });
 export type Outcome = z.infer<typeof Outcome>;
 

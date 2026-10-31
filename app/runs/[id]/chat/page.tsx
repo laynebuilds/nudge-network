@@ -108,6 +108,7 @@ function Phone({ run, side }: { run: RunView; side: "a" | "b" }) {
           <div className="outcome-card">
             <span className={`pill verdict ${run.outcome.verdict}`}>{run.outcome.verdict.replace("_", " ")}</span>
             <p>{run.outcome.headline}</p>
+            {run.outcome.decision?.needed && run.outcome.decision.ask && <p className="phone-sub">Proposed next step: {run.outcome.decision.ask}</p>}
             {run.ratifications?.[side] && <p className="phone-sub">{me.name}&apos;s twin {run.ratifications[side].endorse ? "endorses it" : "objects"}</p>}
           </div>
         )}

@@ -109,11 +109,29 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
               </ul>
             </>
           )}
-          {run.stage === "done" &&
-            deciders.map((f) => <DecisionBox key={f.id} runId={run.id} owner={f} existing={run.decisions[f.id]} onSaved={setRun} />)}
-          <p className="muted">
-            Decisions: {[run.a, run.b].map((f) => `${f.name} ${run.decisions[f.id]?.decision ?? "pending"}`).join(", ")}
-          </p>
+          {run.stage === "done" && (() => {
+            // Runs from before the explicit ask fall back to the headline, unless the twins found no fit.
+            const decision = o.decision ?? (o.verdict !== "no_fit" ? { needed: true, ask: o.headline } : { needed: false, ask: "" });
+            if (!decision.needed || !decision.ask) return <p className="muted">Nothing needs your yes here. Your twins found no next step worth your time.</p>;
+            return (
+              <>
+                {deciders.map((f) => (
+                  <DecisionBox
+                    key={f.id}
+                    runId={run.id}
+                    owner={f}
+                    other={f.id === run.a.id ? run.b.name : run.a.name}
+                    ask={decision.ask}
+                    existing={run.decisions[f.id]}
+                    onSaved={setRun}
+                  />
+                ))}
+                <p className="muted">
+                  {[run.a, run.b].map((f) => `${f.name}: ${LABEL[run.decisions[f.id]?.decision ?? ""] ?? "not decided yet"}`).join(" · ")}
+                </p>
+              </>
+            );
+          })()}
         </section>
       )}
 
@@ -213,14 +231,20 @@ function Scorecard({ run }: { run: RunView }) {
   );
 }
 
+const LABEL: Record<string, string> = { accept: "in", reject: "passed", modify: "wants changes" };
+
 function DecisionBox({
   runId,
   owner,
+  other,
+  ask,
   existing,
   onSaved,
 }: {
   runId: string;
   owner: { id: string; name: string };
+  other: string;
+  ask: string;
   existing?: { decision: string; note: string };
   onSaved: (r: RunView) => void;
 }) {
@@ -229,7 +253,7 @@ function DecisionBox({
   const [busy, setBusy] = useState("");
 
   async function decide(decision: "accept" | "reject" | "modify") {
-    if (decision === "modify" && !note.trim()) return setError("Say what you would change first.");
+    if (decision === "modify" && !note.trim()) return setError("Write what you would change in the box first.");
     setError("");
     setBusy(decision);
     const res = await api<RunView>(`/api/runs/${runId}/decision`, { method: "POST", body: { owner: owner.id, decision, note } });
@@ -241,12 +265,18 @@ function DecisionBox({
   return (
     <div className="decision">
       <h3>{owner.name}&apos;s call</h3>
-      {existing && <p className="muted">Chose {existing.decision}. You can change it.</p>}
-      <textarea rows={2} placeholder="Anything you would change (needed for modify)" value={note} onChange={(e) => setNote(e.target.value)} />
+      <p className="ask">
+        <b>Proposed next step:</b> {ask}
+      </p>
+      <p className="muted">{other} hears nothing until you both say yes. Passing is private.</p>
+      {existing && <p className="muted">You said {LABEL[existing.decision] ?? existing.decision}. You can change it.</p>}
       <div className="row">
-        <button onClick={() => decide("accept")} disabled={!!busy}>{busy === "accept" ? "Saving..." : "Accept"}</button>
-        <button className="secondary" onClick={() => decide("modify")} disabled={!!busy}>{busy === "modify" ? "Saving..." : "Modify"}</button>
-        <button className="danger" onClick={() => decide("reject")} disabled={!!busy}>{busy === "reject" ? "Saving..." : "Reject"}</button>
+        <button onClick={() => decide("accept")} disabled={!!busy}>{busy === "accept" ? "Saving..." : "Yes, go ahead"}</button>
+        <button className="danger" onClick={() => decide("reject")} disabled={!!busy}>{busy === "reject" ? "Saving..." : "Pass"}</button>
+      </div>
+      <textarea rows={2} placeholder="Or say what you would change, then press Suggest a change" value={note} onChange={(e) => setNote(e.target.value)} />
+      <div className="row">
+        <button className="secondary" onClick={() => decide("modify")} disabled={!!busy}>{busy === "modify" ? "Saving..." : "Suggest a change"}</button>
       </div>
       {error && <p className="error">{error}</p>}
     </div>

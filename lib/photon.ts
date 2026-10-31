@@ -49,26 +49,31 @@ async function send(spaceId: string, senderId: string, text: string, key: string
   });
 }
 
-// Only a real opportunity is worth interrupting someone for.
+// Only a concrete ask is worth interrupting someone for. Runs from before decisions existed fall back to
+// the old rule (anything but no_fit).
+export const askOf = (run: Run) => run.outcome?.decision ?? (run.outcome && run.outcome.verdict !== "no_fit" ? { needed: true, ask: run.outcome.headline } : null);
+
 export async function notifyOpportunity(run: Run): Promise<string[]> {
-  if (!photonEnabled() || !run.outcome || run.outcome.verdict === "no_fit") return [];
+  const decision = askOf(run);
+  if (!photonEnabled() || !run.outcome || !decision?.needed || !decision.ask) return [];
   const sent: string[] = [];
-  for (const [me, other, side] of [
-    [run.a, run.b, "a"],
-    [run.b, run.a, "b"],
+  for (const [me, other] of [
+    [run.a, run.b],
+    [run.b, run.a],
   ] as const) {
     const phone = (await getProfile(me.id)).phone;
     const convo = phone && (await conversationWith(phone));
     if (!convo) continue;
-    const open = run.outcome.unresolved.filter((u) => u.for_owner === "both" || u.for_owner === side);
     const text = [
-      `Your twin met ${other.name}'s twin and found an opportunity.`,
+      `Your twin talked with ${other.name}'s twin.`,
       "",
       run.outcome.headline,
-      ...(open.length ? ["", `Needs you: ${open[0].question}${open.length > 1 ? ` (+${open.length - 1} more)` : ""}`] : []),
       "",
-      `Read it: ${publicUrl()}/runs/${run.id}/chat`,
-      "Reply ACCEPT, REJECT, or MODIFY followed by what you would change.",
+      `Proposed next step: ${decision.ask}`,
+      "",
+      `Reply YES to go ahead, NO to pass, or just tell me what you would change. ${other.name} hears nothing until you both say yes.`,
+      "",
+      `Full conversation: ${publicUrl()}/runs/${run.id}/chat`,
     ].join("\n");
     await send(convo.spaceId, convo.senderId, text, `opportunity:${run.id}:${me.id}`);
     sent.push(me.id);
@@ -76,12 +81,13 @@ export async function notifyOpportunity(run: Run): Promise<string[]> {
   return sent;
 }
 
+// YES / NO, or a sentence about what to change (anything longer than a couple of words counts as that).
 export function parseDecision(text: string): { decision: "accept" | "reject" | "modify"; note: string } | null {
-  const m = text.trim().match(/^(accept|yes|reject|no|modify)\b[\s:,.-]*([\s\S]*)$/i);
-  if (!m) return null;
-  const word = m[1].toLowerCase();
-  const decision = word === "yes" ? "accept" : word === "no" ? "reject" : (word as "accept" | "reject" | "modify");
-  return { decision, note: m[2].trim().replace(/^\W+$/, "") };
+  const t = text.trim();
+  if (/^(yes|y|yep|yeah|accept|go ahead|sure|ok|okay)\b/i.test(t)) return { decision: "accept", note: t.replace(/^\S+\W*/, "").replace(/^\W+$/, "") };
+  if (/^(no|n|nope|pass|reject|decline)\b/i.test(t)) return { decision: "reject", note: t.replace(/^\S+\W*/, "").replace(/^\W+$/, "") };
+  const note = t.replace(/^(modify|change)\b\W*/i, "");
+  return note.split(/\s+/).length >= 3 ? { decision: "modify", note } : null;
 }
 
 // Pull new inbound texts from Photon and turn replies into decisions. Called from the webhook (which only
@@ -110,19 +116,16 @@ export async function processInbound(): Promise<number> {
       continue;
     }
     if (!parsed) {
-      await reply("Reply ACCEPT, REJECT, or MODIFY followed by what you would change.");
-      continue;
-    }
-    if (parsed.decision === "modify" && !parsed.note) {
-      await reply("What would you change? Reply MODIFY followed by the change.");
+      await reply("Reply YES to go ahead, NO to pass, or tell me in a sentence what you would change.");
       continue;
     }
     const run = (await getRun(pending.id))!.data;
     run.decisions[ownerId] = { decision: parsed.decision, note: parsed.note, at: new Date().toISOString() };
     await saveRun(run);
     const other = run.a.id === ownerId ? run.b : run.a;
+    const said = parsed.decision === "accept" ? "you're in" : parsed.decision === "reject" ? "you passed" : `you'd change: ${parsed.note}`;
     await reply(
-      `Got it: ${parsed.decision}${parsed.note ? ` (${parsed.note})` : ""}. ${
+      `Got it, ${said}. ${
         run.decisions[other.id]
           ? `${other.name} has decided too, so everything is open now: ${publicUrl()}/runs/${run.id}`
           : `I will let you know when ${other.name} decides.`

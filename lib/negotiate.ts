@@ -104,7 +104,9 @@ async function mediate(
   const { data } = await ask({
     system: `You are a neutral mediator writing the outcome of a negotiation between two digital twins. Side a is ${a.owner.name}, side b is ${b.owner.name}. Goal: ${goal}
 
-Write what the twins actually converged on. Do not invent terms neither side agreed to. Every constraint a twin declared firm must appear in constraints_respected or the verdict cannot be "agreement". Anything a twin flagged as an owner question goes in unresolved. Prefer an honest "partial" or "no_fit" over a forced agreement.`,
+Write what the twins actually converged on. Do not invent terms neither side agreed to. Every constraint a twin declared firm must appear in constraints_respected or the verdict cannot be "agreement". Anything a twin flagged as an owner question goes in unresolved. Prefer an honest "partial" or "no_fit" over a forced agreement.
+
+decision: set needed=true only when there is one concrete, small next step worth a human's yes (a call, an intro, a trial, a draft agreement). Write the ask as that single step in plain words, never "accept the proposal". If the honest answer is no fit and nothing is worth doing, needed=false and the ask is empty: nobody should be interrupted for nothing.`,
     messages: [{ role: "user", content: `Transcript:\n\n${lines}${revision}` }],
     schema: Outcome,
     effort: "high",
