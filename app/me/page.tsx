@@ -6,6 +6,7 @@ import { api, useAutosave, type SaveState } from "../../lib/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { LINK_FIELDS, LINK_META, linkError, normalizeLink, type LinkField, type LinkRead, type Links } from "../../lib/links";
+import BuildTwin from "./twin-build";
 
 const SOURCES = ["note", "imessage", "whatsapp", "email", "calendar", "photo", "doc"] as const;
 const STARTER_PROBES = [
@@ -657,6 +658,7 @@ function ProfileForm({
         })}
         {autosave.state === "error" && <SaveError error={autosave.error} retry={autosave.retry} />}
         <Research reload={reload} />
+        <BuildTwin founder={founder} links={form.links} complete={Object.values(errors).every((e) => !e)} saving={autosave.state === "saving"} />
       </div>
     </section>
   );

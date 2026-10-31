@@ -1,0 +1,47 @@
+/* "Your twin is being built": full screen on a phone, a large dark card on wider screens. */
+.twin-build-trigger { margin-top: 8px; align-items: center; flex-wrap: wrap; gap: 12px; }
+
+.twin-build { --tb-bg: #160b0b; --tb-warm: #f49d37; --tb-cream: #ffe8c2; position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(12, 6, 6, .72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: tb-in .35s ease-out; }
+.twin-build-card { position: relative; width: 100%; height: 100%; background: radial-gradient(120% 80% at 50% 38%, #24120f 0%, var(--tb-bg) 60%); color: #fff; overflow: hidden; outline: none; display: flex; flex-direction: column; }
+@media (min-width: 760px) {
+  .twin-build-card { width: min(920px, 92vw); height: min(700px, 88vh); border-radius: 28px; border: 1px solid rgba(244, 157, 55, .18); box-shadow: 0 40px 120px -30px rgba(0, 0, 0, .8); }
+}
+
+.twin-build-stage { position: absolute; inset: 0; }
+.twin-build-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.twin-build-fx { image-rendering: pixelated; }
+
+.twin-build button.twin-build-skip { position: absolute; top: max(16px, env(safe-area-inset-top)); right: 16px; z-index: 2; padding: 8px 16px; font-size: 13px; font-weight: 500; background: rgba(255, 255, 255, .06); color: rgba(255, 255, 255, .75); border: 1px solid rgba(255, 255, 255, .16); }
+
+.twin-build-foot { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 0 20px max(28px, env(safe-area-inset-bottom)); text-align: center; }
+.twin-build-status { margin: 0; font-size: 15px; letter-spacing: .01em; color: var(--tb-cream); animation: tb-in .5s ease-out; }
+.twin-build-dots { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; }
+.twin-build-dots i { width: 4px; height: 4px; border-radius: 50%; background: var(--tb-warm); animation: tb-dot 1.2s infinite ease-in-out; }
+.twin-build-dots i:nth-child(2) { animation-delay: .15s; }
+.twin-build-dots i:nth-child(3) { animation-delay: .3s; }
+
+.twin-build-ready { animation: tb-up .6s ease-out; }
+.twin-build-ready h2 { margin: 0 0 6px; font-size: 28px; line-height: 1.15; color: #fff; }
+.twin-build-ready p { margin: 0 auto 20px; max-width: 34ch; color: rgba(255, 255, 255, .7); font-size: 15px; }
+.twin-build-actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; max-width: 340px; margin: 0 auto; }
+@media (min-width: 760px) {
+  .twin-build-ready h2 { font-size: 34px; }
+  .twin-build-actions { flex-direction: row; justify-content: center; max-width: none; }
+}
+.twin-build-primary { display: inline-flex; align-items: center; justify-content: center; padding: 14px 24px; border-radius: 999px; background: var(--tb-warm); color: var(--tb-bg); font-weight: 600; font-size: 15px; text-decoration: none; transition: transform .15s; }
+.twin-build-primary:hover { transform: translateY(-1px); }
+.twin-build button.twin-build-close { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .28); }
+
+/* Reduced motion: a still figure with the sources listed, each fading in. */
+.twin-build-list { position: absolute; top: 20px; left: 16px; right: 16px; z-index: 2; margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.twin-build-list li { padding: 4px 10px; border-radius: 999px; font-size: 12px; color: var(--tb-cream); background: rgba(22, 11, 11, .78); border: 1px solid rgba(244, 157, 55, .6); animation: tb-fade .6s var(--d, 0s) both; }
+
+@keyframes tb-in { from { opacity: 0; } }
+@keyframes tb-fade { from { opacity: 0; } }
+@keyframes tb-up { from { opacity: 0; transform: translateY(10px); } }
+@keyframes tb-dot { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+
+/* The global reduced-motion rule turns animations off; the list keeps a fade (opacity only, no movement). */
+@media (prefers-reduced-motion: reduce) {
+  .twin-build-list li { animation: tb-fade .6s var(--d, 0s) both !important; }
+}
