@@ -26,9 +26,11 @@ export type Stored<T> = { data: T; etag: string | null };
 
 export async function readJson<T>(path: string): Promise<Stored<T> | null> {
   if (useRedis()) {
-    const rec = (await redis().hmget(path, "v", "d")) as Record<string, string | null> | null;
-    const v = rec?.v ?? null;
-    const d = rec?.d ?? null;
+    // With automatic deserialization off the client returns the raw [v, d] array, otherwise an object.
+    const rec = (await redis().hmget(path, "v", "d")) as unknown;
+    const [v, d] = Array.isArray(rec)
+      ? (rec as (string | null)[])
+      : [(rec as Record<string, string | null> | null)?.v ?? null, (rec as Record<string, string | null> | null)?.d ?? null];
     if (d == null) return null;
     return { data: JSON.parse(d) as T, etag: String(v ?? "0") };
   }
