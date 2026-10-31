@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { createRun, listRuns } from "../../../lib/runs";
 import { listFounders } from "../../../lib/founders";
 import { session } from "../../../lib/auth";
-import { continueInBackground } from "../../../lib/autorun";
+import { continueInBackground, resumeStalled } from "../../../lib/autorun";
 
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
+  resumeStalled(req);
   const me = await session(req);
   if (!me) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
   const runs = (await listRuns()).filter((r) => me.admin || r.a.id === me.id || r.b.id === me.id);

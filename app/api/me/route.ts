@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { getProfile, loadFounder, saveProfile } from "../../../lib/founders";
 import { session } from "../../../lib/auth";
+import { resumeStalled } from "../../../lib/autorun";
 
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
+  resumeStalled(req);
   const me = await session(req);
   if (!me?.id) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
   const [founder, profile] = await Promise.all([loadFounder(me.id), getProfile(me.id)]);

@@ -16,6 +16,7 @@ export type Run = NegotiationState & {
   fidelity?: Fidelity;
   decisions: Record<string, Decision>;
   lockUntil?: number;
+  updatedAt?: string;
 };
 
 const path = (id: string) => `runs/${id.replace(/[^a-z0-9-]/gi, "")}.json`;
@@ -25,6 +26,7 @@ export async function getRun(id: string) {
 }
 
 export async function saveRun(run: Run, ifMatch?: string | null) {
+  run.updatedAt = new Date().toISOString();
   return writeJson(path(run.id), run, { ifMatch });
 }
 

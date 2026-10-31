@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { getRun, viewFor } from "../../../../lib/runs";
+import { resumeStalled } from "../../../../lib/autorun";
 import { session } from "../../../../lib/auth";
 
 export const runtime = "nodejs";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  resumeStalled(req);
   const me = await session(req);
   if (!me) return NextResponse.json({ error: "Sign in with your invite link." }, { status: 401 });
   const stored = await getRun((await params).id);
