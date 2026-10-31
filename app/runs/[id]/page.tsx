@@ -3,7 +3,7 @@
 import { use, useEffect, useRef, useState } from "react";
 import type { RunView } from "../../../lib/runs";
 
-const STAGES = ["negotiating", "mediating", "ratifying", "scoring", "done"];
+const STAGES = ["researching", "negotiating", "mediating", "ratifying", "scoring", "done"];
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
 export default function RunPage({ params }: { params: Promise<{ id: string }> }) {
@@ -141,6 +141,26 @@ export default function RunPage({ params }: { params: Promise<{ id: string }> })
       )}
 
       {run.fidelity && <Scorecard run={run} />}
+
+      {run.dossiers && (
+        <section className="card">
+          <h2>What each twin found out first</h2>
+          <p className="muted">Before talking, each twin researched the other person&apos;s public footprint with Firecrawl.</p>
+          {(["a", "b"] as const).map((s) => (
+            <details key={s}>
+              <summary>On {name(s)}: {run.dossiers![s].facts.length} public facts</summary>
+              <ul>
+                {run.dossiers![s].facts.map((f, i) => (
+                  <li key={i}>
+                    {f.fact} <a href={f.url} target="_blank" rel="noreferrer">source</a>
+                  </li>
+                ))}
+              </ul>
+              {run.dossiers![s].doubts.length > 0 && <p className="muted">Doubts: {run.dossiers![s].doubts.join("; ")}</p>}
+            </details>
+          ))}
+        </section>
+      )}
 
       <section className="card">
         <h2>Conversation</h2>

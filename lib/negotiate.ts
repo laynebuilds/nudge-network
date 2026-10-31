@@ -1,10 +1,11 @@
 import { ask, type Turn } from "./claude";
 import { Outcome, type Founder, type Ratification, type TwinTurn } from "./schemas";
 import { twinRatify, twinSpeak, twinSystem } from "./twin";
+import { renderDossier, researchFounder, type Dossier } from "./research";
 
 export type TranscriptEntry = { side: "a" | "b"; speaker: string; turn: TwinTurn };
 
-export type Stage = "negotiating" | "mediating" | "ratifying" | "scoring" | "done" | "error";
+export type Stage = "researching" | "negotiating" | "mediating" | "ratifying" | "scoring" | "done" | "error";
 
 // Everything the pipeline needs to resume from any step. Persisted between requests so each request
 // does one model call (or one parallel batch) and stays well inside serverless time limits.
@@ -13,6 +14,8 @@ export type NegotiationState = {
   founders: { a: Founder; b: Founder };
   stage: Stage;
   histories: { a: Turn[]; b: Turn[] };
+  // dossiers.a is the public research ON founder a, which twin b reads before the meeting.
+  dossiers?: { a: Dossier; b: Dossier };
   transcript: TranscriptEntry[];
   outcome?: Outcome;
   ratifications?: { a: Ratification; b: Ratification };
@@ -22,16 +25,22 @@ export type NegotiationState = {
 export const MAX_TURNS = Number(process.env.NUDGE_MAX_TURNS ?? 12);
 
 const systems = (s: NegotiationState) => ({
-  a: twinSystem(s.founders.a, s.founders.b.owner.name, s.goal),
-  b: twinSystem(s.founders.b, s.founders.a.owner.name, s.goal),
+  a: twinSystem(s.founders.a, s.founders.b.owner.name, s.goal) + renderDossier(s.founders.b.owner.name, s.dossiers?.b),
+  b: twinSystem(s.founders.b, s.founders.a.owner.name, s.goal) + renderDossier(s.founders.a.owner.name, s.dossiers?.a),
 });
 
 export function initialState(a: Founder, b: Founder, goal: string): NegotiationState {
-  return { goal, founders: { a, b }, stage: "negotiating", histories: { a: [], b: [] }, transcript: [], revised: false };
+  return { goal, founders: { a, b }, stage: "researching", histories: { a: [], b: [] }, transcript: [], revised: false };
 }
 
 // Advance one step. Returns once the state has moved forward; "scoring" is left to the caller.
 export async function advance(s: NegotiationState): Promise<void> {
+  if (s.stage === "researching") {
+    const [da, db] = await Promise.all([researchFounder(s.founders.a), researchFounder(s.founders.b)]);
+    s.dossiers = { a: da, b: db };
+    s.stage = "negotiating";
+    return;
+  }
   const sys = systems(s);
   const { a, b } = s.founders;
 

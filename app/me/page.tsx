@@ -216,6 +216,17 @@ function Connect({ reload }: { reload: () => void }) {
   const [chat, setChat] = useState("");
   const [myName, setMyName] = useState("");
   const [waMsg, setWaMsg] = useState("");
+  const [url, setUrl] = useState("");
+  const [webMsg, setWebMsg] = useState("");
+
+  async function addPage() {
+    setWebMsg("Reading page...");
+    const res = await fetch("/api/me/web", { method: "POST", body: JSON.stringify({ url }) });
+    const body = await res.json();
+    setWebMsg(res.ok ? `Added: ${body.title}` : body.error);
+    if (res.ok) setUrl("");
+    reload();
+  }
 
   async function photos(files: FileList) {
     setBusy(true);
@@ -302,6 +313,14 @@ function Connect({ reload }: { reload: () => void }) {
         <input type="file" accept=".txt,.zip,text/plain,application/zip" onChange={(e) => e.target.files?.[0] && whatsapp(e.target.files[0])} />
       </label>
       {waMsg && <p className="muted">{waMsg}</p>}
+
+      <h3>Your pages on the web</h3>
+      <p className="muted">Your site, product pages, a post you wrote. Read with Firecrawl.</p>
+      <div className="row">
+        <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." />
+        <button onClick={addPage} disabled={!url}>Add page</button>
+      </div>
+      {webMsg && <p className="muted">{webMsg}</p>}
 
       <h3>iMessage and Apple Mail (Mac)</h3>
       <p className="muted">
