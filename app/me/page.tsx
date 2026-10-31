@@ -36,6 +36,8 @@ export default function MePage() {
   return (
     <>
       <Profile founder={founder} phone={phone} />
+      <About reload={load} />
+      <Social reload={load} />
       <Connect reload={load} />
       <History founder={founder} editable={editable} reload={load} />
       <Sealed />
@@ -335,5 +337,90 @@ function Connect({ reload }: { reload: () => void }) {
 # review .data/ingest/your-id.json, then:
 NUDGE_TOKEN=your-token npm run upload -- --file .data/ingest/your-id.json --url ${typeof window === "undefined" ? "" : window.location.origin}`}</pre>
     </section>
+  );
+}
+
+function About({ reload }: { reload: () => void }) {
+  const [qs, setQs] = useState<{ question: string; answer: string }[]>([]);
+  const [msg, setMsg] = useState("");
+  useEffect(() => {
+    fetch("/api/me/about", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((b) => setQs(b.questions ?? []));
+  }, []);
+  async function save() {
+    const res = await fetch("/api/me/about", { method: "PUT", body: JSON.stringify({ answers: qs.map((q) => q.answer) }) });
+    const body = await res.json();
+    setMsg(res.ok ? `Saved ${body.saved} answers. Your twin reads them in your own words.` : body.error);
+    reload();
+  }
+  return (
+    <section className="card">
+      <h2>In your own words</h2>
+      <p className="muted">
+        Ten questions about purpose, values and where you are heading. Your twin reads these answers, so answer the way you
+        would to a close friend. A few honest sentences each beat a polished paragraph.
+      </p>
+      <div className="form">
+        {qs.map((q, i) => (
+          <label key={i}>
+            {i + 1}. {q.question}
+            <textarea rows={3} value={q.answer} onChange={(e) => setQs(qs.map((x, j) => (j === i ? { ...x, answer: e.target.value } : x)))} />
+          </label>
+        ))}
+        <div className="row"><button onClick={save}>Save answers</button></div>
+        {msg && <p className="muted">{msg}</p>}
+      </div>
+    </section>
+  );
+}
+
+const SOCIAL = [
+  { id: "linkedin", label: "LinkedIn", url: "https://www.linkedin.com/in/your-handle", paste: "Paste your headline, About section and experience (copy from your profile page)." },
+  { id: "x", label: "X", url: "https://x.com/your-handle", paste: "Paste your bio and 10 to 20 recent posts you stand behind." },
+  { id: "instagram", label: "Instagram", url: "https://www.instagram.com/your-handle", paste: "Paste your bio and captions from recent posts." },
+] as const;
+
+function Social({ reload }: { reload: () => void }) {
+  return (
+    <section className="card">
+      <h2>Social profiles</h2>
+      <p className="muted">
+        LinkedIn, X and Instagram block most automatic reading. The link pulls whatever is public about that exact profile;
+        pasting your own content is what gives your twin the real picture.
+      </p>
+      {SOCIAL.map((p) => (
+        <SocialRow key={p.id} platform={p} reload={reload} />
+      ))}
+    </section>
+  );
+}
+
+function SocialRow({ platform, reload }: { platform: (typeof SOCIAL)[number]; reload: () => void }) {
+  const [url, setUrl] = useState("");
+  const [text, setText] = useState("");
+  const [msg, setMsg] = useState("");
+  async function save() {
+    setMsg("Saving...");
+    const res = await fetch("/api/me/social", {
+      method: "POST",
+      body: JSON.stringify({ platform: platform.id, url: url || undefined, text: text || undefined }),
+    });
+    const body = await res.json();
+    if (!res.ok) return setMsg(body.error);
+    const parts = [];
+    if (body.public !== undefined) parts.push(body.public ? `found ${body.public} characters public` : "nothing public found for that link");
+    if (body.pasted !== undefined) parts.push(`saved ${body.pasted} characters you pasted`);
+    setMsg(parts.join(", ") + ".");
+    reload();
+  }
+  return (
+    <div className="form social">
+      <h3>{platform.label}</h3>
+      <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={platform.url} />
+      <textarea rows={4} value={text} onChange={(e) => setText(e.target.value)} placeholder={platform.paste} />
+      <div className="row"><button onClick={save} disabled={!url && !text}>Save {platform.label}</button></div>
+      {msg && <p className="muted">{msg}</p>}
+    </div>
   );
 }

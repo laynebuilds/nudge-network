@@ -3,7 +3,7 @@ import { z } from "zod";
 // One history item from an owner's digital life (message, email, photo caption, calendar entry, note, doc).
 export const HistoryItem = z.object({
   id: z.string(),
-  source: z.enum(["imessage", "email", "calendar", "note", "photo", "doc", "whatsapp"]),
+  source: z.enum(["imessage", "email", "calendar", "note", "photo", "doc", "whatsapp", "linkedin", "x", "instagram", "interview"]),
   ts: z.string(),
   with: z.string().optional(),
   title: z.string().optional(),

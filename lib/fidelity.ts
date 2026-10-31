@@ -22,7 +22,7 @@ export type Fidelity = {
 async function grade(sealed: SealedIntent, preds: Predictions): Promise<ProbeGrades> {
   const { data } = await ask({
     system:
-      "You grade predictions against an owner's sealed answers. A prediction is correct when it would lead to the same decision as the sealed answer. Numbers must match within the stated tolerance (exact for percentages and dates). Missing conditions that change the decision make it incorrect.",
+      "You grade predictions against an owner's sealed answers. A prediction is correct when it would lead to the same decision as the sealed answer. Floors, ceilings, percentages and dates must match exactly; other amounts (like hours a week) match when within about 20% and pointing the same way. Missing conditions that change the decision make it incorrect.",
     messages: [
       {
         role: "user",
