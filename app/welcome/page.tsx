@@ -1,7 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useEffect, useRef, useState, type ComponentProps } from "react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import Planet from "../landing/planet";
+import Plasma from "../landing/plasma";
+
+// Sketch fields draw in the current text color, so they read on the plasma and on paper alike.
+const INK = "currentColor";
 
 // First-run setup: four short screens instead of the full /me page. Everything saves through the
 // same APIs /me uses, so the twin is identical either way.
@@ -100,148 +106,176 @@ export default function Welcome() {
 
   const canNext = [name.trim() && bio.trim() && handleOf(handles.linkedin), true, lines.some((l) => l.trim()), true][step];
 
+  const shell = (children: React.ReactNode) => (
+    <main className="wide landing ob-page">
+      <Plasma />
+      <div className="ob">{children}</div>
+    </main>
+  );
+
   if (step === STEPS.length) {
-    return (
-      <div className="ob">
-        <div className="ob-done">
-          <Planet size={64} />
-          <h1>Your twin is ready.</h1>
-          <p className="lead">It&apos;s reading what you gave it and will start meeting other founders&apos; twins. You&apos;ll hear from it when there&apos;s a decision.</p>
-          <div className="ob-actions">
-            <a className="btn" href="/">Open your inbox</a>
-            <a className="ob-link" href="/me">Teach it more</a>
-          </div>
+    return shell(
+      <div className="ob-done">
+        <Planet size={64} />
+        <h1>Your twin is ready.</h1>
+        <p className="lead">It&apos;s reading what you gave it and will start meeting other founders&apos; twins. You&apos;ll hear from it when there&apos;s a decision.</p>
+        <div className="ob-actions">
+          <a className="btn white" href="/">Open your inbox</a>
+          <a className="ob-link" href="/me">Teach it more</a>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="ob">
-      <div className="ob-card" key={step}>
-        <div className="ob-progress" aria-hidden>
-          {STEPS.map((s, i) => (
-            <i key={s} className={i <= step ? "on" : ""} />
-          ))}
-        </div>
-        {step === 0 && (
-          <>
-            <h1>Who are you?</h1>
-            <p className="lead">Your twin starts here. Other twins see this, so keep it true.</p>
-            <label>Name<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Jasnoor Kaur" autoFocus /></label>
-            <label>What you&apos;re building, in one line<input value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Founder of Obeo. Weather and travel forecasts for athletes." /></label>
-            <div className="links-in">
-              <span className="links-label">Your links <span className="opt">LinkedIn is required, the rest are optional</span></span>
-              {SOCIALS.map((x) => (
-                <label key={x.key} className="prefixed">
-                  <span className="pre">{x.prefix}</span>
-                  <input
-                    value={handles[x.key]}
-                    placeholder={x.placeholder}
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    onChange={(e) => setHandles({ ...handles, [x.key]: e.target.value })}
-                    onBlur={(e) => setHandles({ ...handles, [x.key]: handleOf(e.target.value) })}
-                  />
-                </label>
-              ))}
-              <label className="prefixed">
-                <span className="pre">https://</span>
-                <input
-                  value={site}
-                  placeholder="yourcompany.com"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  onChange={(e) => setSite(e.target.value)}
-                  onBlur={(e) => setSite(e.target.value.trim().replace(/^https?:\/\//, ""))}
-                />
-              </label>
-            </div>
-            <p className="hint">Your twin reads these in the background and keeps only what&apos;s about you.</p>
-          </>
-        )}
+  return shell(
+    <div className="ob-card" key={step}>
+      <div className="ob-progress" aria-hidden>
+        {STEPS.map((s, i) => (
+          <i key={s} className={i <= step ? "on" : ""} />
+        ))}
+      </div>
 
-        {step === 1 && (
-          <>
-            <h1>Who should it find?</h1>
-            <p className="lead">Pick as many as you like.</p>
-            <div className="chips">
-              {LOOKING.map((l) => (
-                <button
-                  key={l}
-                  type="button"
-                  className={`chip-btn ${looking.includes(l) ? "on" : ""}`}
-                  onClick={() => setLooking(looking.includes(l) ? looking.filter((x) => x !== l) : [...looking, l])}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
-            <label>
-              <span>What would make it a yes? <span className="opt">optional</span></span>
-              <textarea rows={2} value={yes} onChange={(e) => setYes(e.target.value)} placeholder="Someone technical who's shipped in health, full time by January" />
-            </label>
-          </>
-        )}
-
-        {step === 2 && (
-          <>
-            <h1>What won&apos;t you do?</h1>
-            <p className="lead">Your twin will never agree to these. Only you can see this page.</p>
-            {lines.map((l, i) => (
-              <input
-                key={i}
-                value={l}
-                placeholder={i === 0 ? "No relocating before next summer" : "Add another"}
-                onChange={(e) => {
-                  const v = [...lines];
-                  v[i] = e.target.value;
-                  if (i === lines.length - 1 && e.target.value) v.push("");
-                  setLines(v);
-                }}
+      {step === 0 && (
+        <>
+          <h1>Who are you?</h1>
+          <p className="lead">Your twin starts here. Other twins see this, so keep it true.</p>
+          <Input sketchColor={INK} size="lg" label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jasnoor Kaur" autoFocus />
+          <Input
+            sketchColor={INK} size="lg"
+            label="What you're building, in one line"
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            placeholder="Founder of Obeo. Weather and travel forecasts for athletes."
+          />
+          <div className="links-in">
+            <span className="links-label">
+              Your links <span className="opt">LinkedIn is required, the rest are optional</span>
+            </span>
+            {SOCIALS.map((x) => (
+              <PrefixInput
+                key={x.key}
+                prefix={x.prefix}
+                value={handles[x.key]}
+                placeholder={x.placeholder}
+                onChange={(e) => setHandles({ ...handles, [x.key]: e.target.value })}
+                onBlur={(e) => setHandles({ ...handles, [x.key]: handleOf(e.target.value) })}
               />
             ))}
-            <div className="ob-private">
-              <span>Three private answers</span>
-              <p className="hint">We check your twin against these to see if it really knows you. No twin ever reads them.</p>
-              {PRIVATE_QS.map((q, i) => (
-                <label key={q}>
-                  {q}
-                  <input value={answers[i]} onChange={(e) => setAnswers(answers.map((a, j) => (j === i ? e.target.value : a)))} />
-                </label>
-              ))}
-            </div>
-          </>
-        )}
+            <PrefixInput
+              prefix="https://"
+              value={site}
+              placeholder="yourcompany.com"
+              onChange={(e) => setSite(e.target.value)}
+              onBlur={(e) => setSite(e.target.value.trim().replace(/^https?:\/\//, ""))}
+            />
+          </div>
+          <p className="hint">Your twin reads these in the background and keeps only what&apos;s about you.</p>
+        </>
+      )}
 
-        {step === 3 && (
-          <>
-            <h1>Where should it text you?</h1>
-            <p className="lead">When your twin finds someone worth meeting, it texts you. Reply yes and it sets up the meeting.</p>
-            <label>iMessage number<input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 415 555 0100" inputMode="tel" /></label>
-            <p className="hint">Only used for your twin&apos;s texts. You can skip this and use the inbox instead.</p>
-          </>
-        )}
+      {step === 1 && (
+        <>
+          <h1>Who should it find?</h1>
+          <p className="lead">Pick as many as you like.</p>
+          <div className="chips">
+            {LOOKING.map((l) => (
+              <button
+                key={l}
+                type="button"
+                className={`chip-btn ${looking.includes(l) ? "on" : ""}`}
+                onClick={() => setLooking(looking.includes(l) ? looking.filter((x) => x !== l) : [...looking, l])}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+          <Textarea
+            sketchColor={INK} size="lg"
+            label="What would make it a yes? (optional)"
+            rows={2}
+            value={yes}
+            onChange={(e) => setYes(e.target.value)}
+            placeholder="Someone technical who's shipped in health, full time by January"
+          />
+        </>
+      )}
 
-        {err && <p className="error">{err}</p>}
-        <div className="ob-actions">
-          <button onClick={next} disabled={busy || !canNext}>
-            {busy ? "Saving..." : step === STEPS.length - 1 ? "Finish" : "Continue"}
+      {step === 2 && (
+        <>
+          <h1>What won&apos;t you do?</h1>
+          <p className="lead">Your twin will never agree to these. Only you can see this page.</p>
+          {lines.map((l, i) => (
+            <Input
+              key={i}
+              sketchColor={INK} size="lg"
+              value={l}
+              placeholder={i === 0 ? "No relocating before next summer" : "Add another"}
+              onChange={(e) => {
+                const v = [...lines];
+                v[i] = e.target.value;
+                if (i === lines.length - 1 && e.target.value) v.push("");
+                setLines(v);
+              }}
+            />
+          ))}
+          <div className="ob-private">
+            <span>Three private answers</span>
+            <p className="hint">We check your twin against these to see if it really knows you. No twin ever reads them.</p>
+            {PRIVATE_QS.map((q, i) => (
+              <Input key={q} sketchColor={INK} size="lg" label={q} value={answers[i]} onChange={(e) => setAnswers(answers.map((a, j) => (j === i ? e.target.value : a)))} />
+            ))}
+          </div>
+        </>
+      )}
+
+      {step === 3 && (
+        <>
+          <h1>Where should it text you?</h1>
+          <p className="lead">When your twin finds someone worth meeting, it texts you. Reply yes and it sets up the meeting.</p>
+          <Input sketchColor={INK} size="lg" label="iMessage number" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 415 555 0100" inputMode="tel" />
+          <p className="hint">Only used for your twin&apos;s texts. You can skip this and use the inbox instead.</p>
+        </>
+      )}
+
+      {err && <p className="error">{err}</p>}
+      <div className="ob-actions">
+        <button className="ob-primary" onClick={next} disabled={busy || !canNext}>
+          {busy ? "Saving..." : step === STEPS.length - 1 ? "Finish" : "Continue"}
+        </button>
+        {step > 0 && (
+          <button className="ob-link" onClick={() => setStep(step - 1)} disabled={busy}>
+            Back
           </button>
-          {step > 0 && (
-            <button className="ob-link" onClick={() => setStep(step - 1)} disabled={busy}>
-              Back
-            </button>
-          )}
-          {(step === 1 || step === 3) && (
-            <button className="ob-link" onClick={() => setStep(step + 1)} disabled={busy}>
-              Skip
-            </button>
-          )}
-        </div>
+        )}
+        {(step === 1 || step === 3) && (
+          <button className="ob-link" onClick={() => setStep(step + 1)} disabled={busy}>
+            Skip
+          </button>
+        )}
       </div>
+    </div>
+  );
+}
+
+// A sketch field with a fixed prefix (linkedin.com/in/) drawn inside it, so people type only their username.
+function PrefixInput({ prefix, ...props }: { prefix: string } & ComponentProps<typeof Input>) {
+  const pre = useRef<HTMLSpanElement>(null);
+  const [pad, setPad] = useState(0);
+  useLayoutEffect(() => setPad(pre.current?.offsetWidth ?? 0), [prefix]);
+  return (
+    <div className="prefix-field">
+      <span ref={pre} className="prefix-text" aria-hidden>
+        {prefix}
+      </span>
+      <Input
+        sketchColor={INK} size="lg"
+        aria-label={`${prefix} username`}
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        style={{ paddingLeft: pad ? pad + 18 : undefined }}
+        {...props}
+      />
     </div>
   );
 }

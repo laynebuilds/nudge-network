@@ -474,8 +474,6 @@ main.app-main { max-width: 1180px; padding: 96px 20px 40px; }
 .ob-card { width: min(560px, 100%); display: grid; gap: 16px; animation: fadeUp .4s both; }
 .ob-card h1, .ob-done h1 { font-size: clamp(38px, 6vw, 56px); }
 .ob-card .lead, .ob-done .lead { margin: 0 0 8px; }
-.ob-card label { font-size: 14px; font-weight: 500; gap: 8px; }
-.ob-card input, .ob-card textarea { font-size: 16px; padding: 14px 16px; background: #fff; }
 .opt { color: var(--muted); font-weight: 400; margin-left: 4px; }
 .hint { margin: -6px 0 0; font-size: 13.5px; color: var(--muted); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -491,16 +489,31 @@ main.app-main { max-width: 1180px; padding: 96px 20px 40px; }
 .ob-done .ob-actions { justify-content: center; }
 .links-in { display: grid; gap: 8px; }
 .links-label { font-size: 14px; font-weight: 500; }
-.prefixed { display: flex; align-items: center; gap: 0; border: 1px solid var(--line-2); border-radius: 14px; background: #fff; overflow: hidden; }
-.prefixed:focus-within { border-color: var(--ink); box-shadow: 0 0 0 4px rgba(23, 18, 28, .08); }
-.prefixed .pre { padding: 14px 0 14px 16px; color: var(--muted); font-size: 16px; white-space: nowrap; font-weight: 400; }
-.ob-card .prefixed input { border: none; box-shadow: none; background: transparent; padding-left: 1px; min-width: 0; }
-.ob-card .prefixed input:focus { box-shadow: none; }
-.ob-card .prefixed { gap: 0; display: flex; }
-.prefixed .pre { color: var(--ink-2); }
 /* Phone only: the signed-out nav keeps the logo and the two account buttons; the section links live on the page. */
 @media (max-width: 640px) {
   .nav:has(.r) .links { display: none; }
   .nav .r { gap: 4px; }
   .nav .r button { padding: 8px 12px; font-size: 13px; white-space: nowrap; }
 }
+
+/* Onboarding on the plasma: same backdrop as the landing, hand-drawn fields in the text color */
+.ob-page .ob { position: relative; }
+.ob-card .doodle-field > span:first-child { font-size: 14px !important; font-weight: 500 !important; }
+.prefix-field { position: relative; }
+.prefix-text { position: absolute; left: 18px; top: 14px; z-index: 2; font-size: 17px; line-height: 1.5; color: var(--ink-2); pointer-events: none; white-space: nowrap; }
+.ob-primary { padding: 14px 28px; }
+.landing.plasma-on .ob { color: #fff; }
+.landing.plasma-on .ob .lead { color: rgba(255, 255, 255, .8); }
+.landing.plasma-on .ob .hint, .landing.plasma-on .ob .opt { color: rgba(255, 255, 255, .6); }
+.landing.plasma-on .prefix-text { color: rgba(255, 255, 255, .55); }
+.landing.plasma-on .ob input::placeholder, .landing.plasma-on .ob textarea::placeholder { color: rgba(255, 255, 255, .5); }
+.landing.plasma-on .ob-progress i { background: rgba(255, 255, 255, .22); }
+.landing.plasma-on .ob-progress i.on { background: #fff; }
+.landing.plasma-on .ob-private { border-top-color: rgba(255, 255, 255, .18); }
+.landing.plasma-on .ob .ob-primary { background: #fff; color: var(--ink); border-color: #fff; }
+.landing.plasma-on .ob .ob-link { color: rgba(255, 255, 255, .65); }
+.landing.plasma-on .ob .ob-link:hover:not(:disabled) { color: #fff; }
+.landing.plasma-on .chip-btn { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .45); }
+.landing.plasma-on .chip-btn:hover:not(:disabled) { border-color: #fff; }
+.landing.plasma-on .chip-btn.on { background: #fff; color: var(--ink); border-color: #fff; }
+.landing.plasma-on .ob .error { color: #ffb4a8; }
