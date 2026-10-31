@@ -22,7 +22,7 @@ export default function SiteNav({ signedIn }: { signedIn: boolean }) {
 
   return (
     <header className={`nav ${landing ? "over" : ""} ${!landing || scrolled ? "float" : ""}`}>
-      <a href={signedIn ? "/?landing" : "/"} className="logo">
+      <a href={signedIn ? "/?landing=1" : "/"} className="logo">
         <Planet size={24} />
         Jebln
       </a>
