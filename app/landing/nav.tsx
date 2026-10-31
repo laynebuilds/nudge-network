@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import Planet from "./planet";
 
 // Over the landing hero the nav is transparent with white text, then it floats as a pill once you scroll.
 // Everywhere else it is the floating pill from the start.
@@ -20,10 +21,7 @@ export default function SiteNav({ signedIn }: { signedIn: boolean }) {
   return (
     <header className={`nav ${landing ? "over" : ""} ${!landing || scrolled ? "float" : ""}`}>
       <a href="/" className="logo">
-        <span className="mark" aria-hidden>
-          <i />
-          <i />
-        </span>
+        <Planet size={24} />
         Jebln
       </a>
       {signedIn ? (
