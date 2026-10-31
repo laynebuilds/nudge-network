@@ -268,7 +268,25 @@ const hash = (a: number, b: number) => {
 
 type Chip = { label: string; start: number; x0: number; y0: number; cx: number; cy: number; done: boolean };
 
-function TwinBuild({ chips, stages, onClose }: { chips: string[]; stages: string[]; onClose: () => void }) {
+// Optional props let a caller drive it from real work: `duration` stretches the build, `done` ends it early,
+// `status` replaces the timed stage lines, and `onReady` swaps the ready links for one button (and fires on its own).
+function TwinBuild({
+  chips,
+  stages,
+  onClose,
+  duration = DURATION,
+  done,
+  status,
+  onReady,
+}: {
+  chips: string[];
+  stages: string[];
+  onClose: () => void;
+  duration?: number;
+  done?: boolean;
+  status?: string;
+  onReady?: () => void;
+}) {
   const [phase, setPhase] = useState<"building" | "ready">("building");
   const [stage, setStage] = useState(0);
   const [reduced] = useState(() => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -280,6 +298,18 @@ function TwinBuild({ chips, stages, onClose }: { chips: string[]; stages: string
   phaseRef.current = phase;
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  const readyRef = useRef(onReady);
+  readyRef.current = onReady;
+
+  useEffect(() => {
+    if (done) setPhase("ready");
+  }, [done]);
+
+  useEffect(() => {
+    if (phase !== "ready" || !readyRef.current) return;
+    const t = setTimeout(() => readyRef.current?.(), 1600);
+    return () => clearTimeout(t);
+  }, [phase]);
 
   // Esc closes, the page behind stops scrolling, and focus returns to where it was.
   useEffect(() => {
@@ -347,7 +377,7 @@ function TwinBuild({ chips, stages, onClose }: { chips: string[]; stages: string
     ro.observe(box);
 
     // Chips spawn evenly through the build and land before it settles.
-    const spread = DURATION - FLIGHT - 900;
+    const spread = duration - FLIGHT - 900;
     const flying: Chip[] = chips.map((label, i) => {
       const a = hash(i, 3) * Math.PI * 2;
       return { label, start: 400 + (i / Math.max(1, chips.length)) * spread, x0: Math.cos(a), y0: Math.sin(a), cx: hash(i, 5) < 0.5 ? -1 : 1, cy: 0, done: false };
@@ -364,11 +394,11 @@ function TwinBuild({ chips, stages, onClose }: { chips: string[]; stages: string
       const dt = Math.min(64, now - prev);
       prev = now;
       const ready = phaseRef.current === "ready";
-      const progress = reduced || ready ? 1 : Math.min(1, t / DURATION);
+      const progress = reduced || ready ? 1 : Math.min(1, t / duration);
       if (!ready && !reduced) {
         const s = Math.min(stages.length - 1, Math.floor(progress * stages.length));
         if (s !== lastStage) setStage((lastStage = s));
-        if (t >= DURATION) setPhase("ready");
+        if (t >= duration) setPhase("ready");
       }
 
       // Layout: the figure fills the space above the text block at the bottom, head to feet.
@@ -528,7 +558,7 @@ function TwinBuild({ chips, stages, onClose }: { chips: string[]; stages: string
       cancelAnimationFrame(raf);
       ro.disconnect();
     };
-  }, [chips, stages, reduced]);
+  }, [chips, stages, reduced, duration]);
 
   return createPortal(
     <div className="twin-build" role="dialog" aria-modal="true" aria-label="Building your twin">
@@ -550,19 +580,25 @@ function TwinBuild({ chips, stages, onClose }: { chips: string[]; stages: string
           </ul>
         )}
         <div className="twin-build-foot">
-          {phase === "building" && !reduced ? (
-            <p className="twin-build-status" aria-live="polite" key={stage}>
-              {stages[stage]}
+          {phase === "building" && (!reduced || status) ? (
+            <p className="twin-build-status" aria-live="polite" key={status ?? stage}>
+              {status ?? stages[stage]}
               <span className="twin-build-dots" aria-hidden="true"><i /><i /><i /></span>
             </p>
           ) : (
             <div className="twin-build-ready">
               <h2>Your twin is ready</h2>
               <p>It holds everything you shared and decides the way you would.</p>
-              <div className="twin-build-actions">
-                <a className="twin-build-primary" href="/">See your matches</a>
-                <button type="button" className="twin-build-close" onClick={onClose}>Close</button>
-              </div>
+              {onReady ? (
+                <div className="twin-build-actions">
+                  <button type="button" className="twin-build-primary" onClick={onReady}>Meet your twin</button>
+                </div>
+              ) : (
+                <div className="twin-build-actions">
+                  <a className="twin-build-primary" href="/">See your matches</a>
+                  <button type="button" className="twin-build-close" onClick={onClose}>Close</button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -571,3 +607,6 @@ function TwinBuild({ chips, stages, onClose }: { chips: string[]; stages: string
     document.body
   );
 }
+
+// The onboarding Finish plays the same build as a loading screen, driven by the real work.
+export { TwinBuild as TwinBuildOverlay, chipLabels };

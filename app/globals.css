@@ -545,3 +545,6 @@ main.app-main { max-width: 1180px; padding: 96px 20px 40px; }
 .phones { grid-template-columns: 1fr !important; }
 .msg .sender { font-size: 11px; color: #8e8e93; margin: 0 12px 2px; }
 .thread { color-scheme: dark; scrollbar-width: thin; scrollbar-color: #3a3a3c transparent; }
+/* After Finish: the twin and its first matches get a wider column than the form steps. */
+.ob-wide { width: min(720px, 100%); }
+.ob-panel { width: 100%; text-align: left; }

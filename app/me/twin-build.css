@@ -45,3 +45,4 @@
 @media (prefers-reduced-motion: reduce) {
   .twin-build-list li { animation: tb-fade .6s var(--d, 0s) both !important; }
 }
+.twin-build button.twin-build-primary { border: none; }
