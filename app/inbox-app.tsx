@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { RunView } from "../lib/runs";
 import StartForm from "./start-form";
+import MatchList from "../components/twin/MatchList";
 
-// Signed-in home: every conversation your twin is having, plus who it wants to talk to next.
+// Inbox (/inbox): every conversation your twin is having, plus who it wants to talk to next.
 // Same APIs as the old dashboard and run page; this is only a calmer way to look at them.
 type RunRow = { id: string; createdAt: string; a: { id: string; name: string }; b: { id: string; name: string }; stage: string; goal: string };
 type Match = { id: string; name: string; score: number; why: string; goal: string; demo: boolean };
@@ -101,7 +102,7 @@ export default function InboxApp({
   function pick(id: string) {
     setSel(id);
     setCompose(false);
-    history.replaceState(null, "", `/?t=${id}`);
+    history.replaceState(null, "", `/inbox?t=${id}`);
   }
 
   async function connect(m: Match) {
@@ -182,6 +183,11 @@ export default function InboxApp({
             </div>
           ) : current ? (
             <Thread key={current.id} v={current} side={side(current)} onSaved={(v) => setViews((x) => ({ ...x, [v.id]: v }))} />
+          ) : runs?.length === 0 && me ? (
+            <div className="ib-matches">
+              <p className="muted">No conversations yet. These are the people your twin most wants to meet.</p>
+              <MatchList me={me} limit={3} />
+            </div>
           ) : (
             <div className="ib-blank">
               <p className="muted">{runs ? "Pick a conversation." : "Loading your inbox..."}</p>
