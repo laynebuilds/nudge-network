@@ -26,7 +26,17 @@ export async function matchesFor(id: string, refresh = false): Promise<Match[]> 
   if (!refresh && cached && Date.now() - cached.data.at < TTL_MS) return cached.data.matches;
 
   const everyone = await listFounders();
-  const others = everyone.filter((f) => f.id !== id);
+  const meName = everyone.find((f) => f.id === id)?.name.trim().toLowerCase();
+  // Test sign-ups create several twins with the same name. Never match someone with themselves, and keep
+  // only the richest twin per name so each person appears once.
+  const byName = new Map<string, (typeof everyone)[number]>();
+  for (const f of everyone) {
+    const key = f.name.trim().toLowerCase();
+    if (f.id === id || key === meName) continue;
+    const kept = byName.get(key);
+    if (!kept || f.items > kept.items) byName.set(key, f);
+  }
+  const others = [...byName.values()];
   const [me, ...theirs] = await Promise.all([loadFounder(id), ...others.map((f) => loadFounder(f.id))]);
   const { data } = await ask({
     system: `You are the matchmaker of a network where people's digital twins negotiate on their behalf. Rank who ${me.owner.name} should talk to first. Synergy means a concrete reason to work together: complementary skills, overlapping missions, a customer or investor fit, a problem one can solve for the other. Shared vibes are not enough. Be honest: low scores are fine.`,
