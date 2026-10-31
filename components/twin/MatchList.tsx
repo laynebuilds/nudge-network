@@ -6,8 +6,30 @@ import LivePhone from "./LivePhone";
 import "./twin.css";
 
 type Match = { id: string; name: string; score: number; why: string; goal: string; demo: boolean };
+type Side = { id: string; name: string };
+type RunSummary = {
+  id: string;
+  createdAt: string;
+  a: Side;
+  b: Side;
+  stage: string;
+  outcome?: { verdict: string; headline: string; decision?: { needed: boolean; ask: string } };
+  decisions?: Record<string, unknown>;
+};
 
 const pct = (score: number) => Math.max(0, Math.min(100, Math.round(score)));
+const verdictLabel = (v: string) => v.replace(/_/g, " ");
+
+// The newest conversation between me and this match. Duplicate test twins share names, so a name match counts too.
+function runFor(runs: RunSummary[], me: string, m: Match) {
+  const name = m.name.trim().toLowerCase();
+  return runs
+    .filter((r) => {
+      const other = r.a.id === me ? r.b : r.b.id === me ? r.a : null;
+      return !!other && (other.id === m.id || other.name.trim().toLowerCase() === name);
+    })
+    .sort((x, y) => Date.parse(y.createdAt) - Date.parse(x.createdAt))[0];
+}
 
 // One central column of the people your twin wants to meet, best first. Starting a conversation turns that
 // card into the live phone, so the opening exchange plays right where you clicked.
@@ -17,10 +39,12 @@ export default function MatchList({ me, limit, startAllLabel }: { me: string; li
   // match id -> run id, for every conversation started from this list.
   const [started, setStarted] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string[]>([]);
+  const [runs, setRuns] = useState<RunSummary[]>([]);
 
   async function load() {
     setError("");
     setMatches(null);
+    api<{ runs: RunSummary[] }>("/api/runs").then((r) => r.ok && setRuns(r.body.runs ?? []));
     const res = await api<{ matches: Match[] }>("/api/matches");
     if (!res.ok) return setError(res.error);
     setMatches(res.body.matches ?? []);
@@ -44,13 +68,13 @@ export default function MatchList({ me, limit, startAllLabel }: { me: string; li
   // One after another, so a failure stops the batch instead of leaving half of them racing.
   async function startAll() {
     setError("");
-    for (const m of shown.filter((x) => !started[x.id])) {
+    for (const m of shown.filter((x) => !started[x.id] && !runFor(runs, me, x))) {
       if (!(await start(m))) return;
     }
   }
 
   const shown = (matches ?? []).slice(0, limit ?? matches?.length);
-  const allStarted = shown.length > 0 && shown.every((m) => started[m.id]);
+  const allStarted = shown.length > 0 && shown.every((m) => started[m.id] || runFor(runs, me, m));
 
   return (
     <div className="twin-col twin-matches">
@@ -77,6 +101,21 @@ export default function MatchList({ me, limit, startAllLabel }: { me: string; li
 
       {shown.map((m) => {
         const runId = started[m.id];
+        const past = runId ? undefined : runFor(runs, me, m);
+        const done = past?.stage === "done";
+        const needsYou = done && !!past?.outcome?.decision?.needed && !past?.decisions?.[me];
+        const pill = !past
+          ? ""
+          : past.stage === "error"
+            ? "error"
+            : !done
+              ? "Talking"
+              : needsYou
+                ? "Needs you"
+                : past.outcome
+                  ? verdictLabel(past.outcome.verdict)
+                  : "done";
+        const pillClass = !past ? "" : !done && past.stage !== "error" ? "on" : needsYou ? "on" : past.outcome?.verdict ?? past.stage;
         return (
           <article key={m.id} className={`twin-card twin-match${runId ? " live" : ""}`}>
             <div className="twin-match-top">
@@ -91,6 +130,17 @@ export default function MatchList({ me, limit, startAllLabel }: { me: string; li
               <>
                 <LivePhone runId={runId} side="a" />
                 <a className="ob-link twin-open" href={`/runs/${runId}/chat`}>Open the full conversation</a>
+              </>
+            ) : past ? (
+              <>
+                <p>
+                  <span className={`pill ${pillClass}`}>{pill}</span>
+                </p>
+                {past.outcome?.headline && <p className="twin-goal">{past.outcome.headline}</p>}
+                <a className="button-link" href={`/runs/${past.id}/chat`}>Open conversation</a>
+                <button className="ob-link" onClick={() => start(m)} disabled={busy.includes(m.id)}>
+                  {busy.includes(m.id) ? "Starting..." : "Talk again"}
+                </button>
               </>
             ) : (
               <>

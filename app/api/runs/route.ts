@@ -11,7 +11,16 @@ export async function GET(req: Request) {
   const me = await session(req);
   if (!me) return NextResponse.json({ error: "Sign in to continue." }, { status: 401 });
   const runs = (await listRuns()).filter((r) => me.admin || r.a.id === me.id || r.b.id === me.id);
-  return NextResponse.json({ runs: runs.map(({ id, createdAt, a, b, stage, goal }) => ({ id, createdAt, a, b, stage, goal })) });
+  return NextResponse.json({ runs: runs.map(({ id, createdAt, a, b, stage, goal, outcome, decisions }) => ({
+      id,
+      createdAt,
+      a,
+      b,
+      stage,
+      goal,
+      outcome: outcome && { verdict: outcome.verdict, headline: outcome.headline, decision: outcome.decision },
+      decisions,
+    })) });
 }
 
 export async function POST(req: Request) {
