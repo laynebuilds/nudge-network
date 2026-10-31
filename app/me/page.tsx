@@ -6,6 +6,7 @@ import { api, useAutosave, type SaveState } from "../../lib/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { LINK_FIELDS, LINK_META, linkError, normalizeLink, type LinkField, type LinkRead, type Links } from "../../lib/links";
+import BuildTwin from "./twin-build";
 
 const SOURCES = ["note", "imessage", "whatsapp", "email", "calendar", "photo", "doc"] as const;
 const STARTER_PROBES = [
@@ -81,9 +82,17 @@ export default function MePage() {
       </details>
       <Sealed />
       <section className="card next-step">
-        <h2>Your twin is ready to meet people</h2>
-        <p className="muted">It ranks everyone on the network by synergy. Pick a match and watch the twins talk.</p>
-        <a className="button-link" href="/">See your matches</a>
+        <h2>Done for now?</h2>
+        <p className="muted">
+          Everything you entered is saved automatically, so you can leave and come back to it as it is. Continue builds your
+          twin from it and takes you to the people it should meet first.
+        </p>
+        <div className="row">
+          <button className="continue" onClick={() => window.dispatchEvent(new Event("jebln:continue"))}>
+            Continue
+          </button>
+          <a className="button-link secondary" href="/">Skip to your matches</a>
+        </div>
       </section>
     </>
   );
@@ -657,6 +666,7 @@ function ProfileForm({
         })}
         {autosave.state === "error" && <SaveError error={autosave.error} retry={autosave.retry} />}
         <Research reload={reload} />
+        <BuildTwin founder={founder} links={form.links} complete={Object.values(errors).every((e) => !e)} saving={autosave.state === "saving"} />
       </div>
     </section>
   );
