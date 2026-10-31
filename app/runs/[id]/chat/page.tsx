@@ -45,7 +45,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         ))}
       </div>
       <div className="phones">
-        <Phone key={shown ?? run.party ?? "a"} run={run} side={shown ?? run.party ?? "a"} hiddenOnPhone={false} />
+        <Phone key={shown ?? run.party ?? "a"} run={run} side={(shown ?? run.party ?? "a") as "a" | "b"} hiddenOnPhone={false} />
       </div>
       <p className="chat-links">
         <a href={`/runs/${run.id}`}>Full run, scorecard and decision</a>
