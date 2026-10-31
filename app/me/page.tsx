@@ -29,10 +29,24 @@ export default function MePage() {
   }, []);
 
   if (error) return <section className="card"><p className="error">{error}</p></section>;
-  if (!founder) return <p className="muted">Loading...</p>;
+  if (!founder) return <p className="thinking">Loading your twin <i /><i /><i /></p>;
 
   return (
     <>
+      <div className="page-head">
+        <span className="eyebrow">Your twin</span>
+        <h1>Teach it to decide like you</h1>
+        <p className="lede">
+          Your twin knows only what is on this page. The other person&apos;s twin never sees your history directly, only what
+          your twin chooses to say.
+        </p>
+      </div>
+      <ul className="steps-mini">
+        <li><a href="#profile">1. Profile</a></li>
+        <li><a href="#connect">2. Connect your life</a></li>
+        <li><a href="#history">3. History ({founder.items.length})</a></li>
+        <li><a href="#sealed">4. Sealed intent</a></li>
+      </ul>
       <Profile founder={founder} />
       <Connect reload={load} />
       <History founder={founder} editable={editable} reload={load} />
@@ -50,11 +64,10 @@ function Profile({ founder }: { founder: Founder }) {
     setSaved(true);
   }
   return (
-    <section className="card">
-      <h1>Your twin</h1>
+    <section className="card" id="profile">
+      <h2>Profile</h2>
       <p className="muted">
-        Your twin knows only what is on this page. The other person&apos;s twin never sees your history directly, only what your
-        twin chooses to say. The public bio is also what the baseline gets, so the scorecard can show how much your history adds.
+        The public bio is also what the baseline gets, so the scorecard can show how much your history adds.
       </p>
       <div className="form">
         <label>Name<input value={name} onChange={(e) => { setName(e.target.value); setSaved(false); }} /></label>
@@ -104,8 +117,8 @@ function History({ founder, editable, reload }: { founder: Founder; editable: st
   }
 
   return (
-    <section className="card">
-      <h2>History ({founder.items.length} items)</h2>
+    <section className="card" id="history">
+      <h2>History <span className="muted">({founder.items.length} items)</span></h2>
       <p className="muted">
         Add what a twin needs to act like you: messages about what you want, constraints (money, time, location, family),
         past decisions, things you said no to. Paste real texts and notes; your own words beat summaries.
@@ -134,7 +147,7 @@ function History({ founder, editable, reload }: { founder: Founder; editable: st
         {[...founder.items].reverse().map((i) => (
           <li key={i.id}>
             <div className="who">
-              {i.source} {i.ts} {i.with && `with ${i.with}`} {i.title ?? i.subject}
+              <span className="src">{i.source}</span> {i.ts} {i.with && `with ${i.with}`} {i.title ?? i.subject}
               {own.has(i.id) ? <button className="link" onClick={() => remove(i.id)}>remove</button> : <span className="pill">public seed</span>}
             </div>
             <p>{(i.caption ?? i.text ?? "").slice(0, 400)}</p>
@@ -172,7 +185,8 @@ function Sealed() {
 
   if (!sealed) return null;
   return (
-    <section className="card">
+    <section className="card sealed-card" id="sealed">
+      <div className="seal">sealed</div>
       <h2>Sealed intent</h2>
       <p className="muted">
         Only you see this. No agent and not the other person ever reads it. After a run, the scorer asks your twin to predict
@@ -270,13 +284,14 @@ function Connect({ reload }: { reload: () => void }) {
   }
 
   return (
-    <section className="card">
+    <section className="card" id="connect">
       <h2>Connect your life</h2>
       <p className="muted">
         Plug in your main messaging app and your camera roll. That is where your real priorities, constraints and habits live,
         and it is what lets your twin decide like you instead of like a generic founder.
       </p>
 
+      <div className="source">
       <h3>Photo gallery</h3>
       <p className="muted">
         Pick photos that show your life and work: whiteboards, places, people you spend time with, what you build. Claude writes
@@ -287,7 +302,9 @@ function Connect({ reload }: { reload: () => void }) {
         <input type="file" accept="image/*" multiple disabled={busy} onChange={(e) => e.target.files?.length && photos(e.target.files)} />
       </label>
       {photoMsg && <p className="muted">{photoMsg}</p>}
+      </div>
 
+      <div className="source">
       <h3>WhatsApp</h3>
       <p className="muted">
         In WhatsApp open a chat, tap the name, Export chat, Without media. Upload the .zip or .txt. Repeat for the chats that
@@ -302,7 +319,9 @@ function Connect({ reload }: { reload: () => void }) {
         <input type="file" accept=".txt,.zip,text/plain,application/zip" onChange={(e) => e.target.files?.[0] && whatsapp(e.target.files[0])} />
       </label>
       {waMsg && <p className="muted">{waMsg}</p>}
+      </div>
 
+      <div className="source">
       <h3>iMessage and Apple Mail (Mac)</h3>
       <p className="muted">
         Uses Nudge to read your Mac locally, shows you the file, then uploads only what you keep. Your token is the last part of
@@ -311,6 +330,7 @@ function Connect({ reload }: { reload: () => void }) {
       <pre className="cmd">{`NUDGE_TOKEN=your-token npm run ingest:nudge -- --id your-id --contacts "Name One,Name Two" --days 90
 # review .data/ingest/your-id.json, then:
 NUDGE_TOKEN=your-token npm run upload -- --file .data/ingest/your-id.json --url ${typeof window === "undefined" ? "" : window.location.origin}`}</pre>
+      </div>
     </section>
   );
 }
