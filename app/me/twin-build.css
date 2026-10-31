@@ -1,10 +1,10 @@
 /* "Your twin is being built": full screen on a phone, a large dark card on wider screens. */
 .twin-build-trigger { margin-top: 8px; align-items: center; flex-wrap: wrap; gap: 12px; }
 
-.twin-build { --tb-bg: #160b0b; --tb-warm: #f49d37; --tb-cream: #ffe8c2; position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(12, 6, 6, .72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: tb-in .35s ease-out; }
-.twin-build-card { position: relative; width: 100%; height: 100%; background: radial-gradient(120% 80% at 50% 38%, #24120f 0%, var(--tb-bg) 60%); color: #fff; overflow: hidden; outline: none; display: flex; flex-direction: column; }
+.twin-build { --tb-bg: #05060f; --tb-warm: #3d5afe; --tb-cream: #e6ebff; position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(3, 4, 10, .72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: tb-in .35s ease-out; }
+.twin-build-card { position: relative; width: 100%; height: 100%; background: radial-gradient(120% 80% at 50% 38%, #0d1433 0%, var(--tb-bg) 60%); color: #fff; overflow: hidden; outline: none; display: flex; flex-direction: column; }
 @media (min-width: 760px) {
-  .twin-build-card { width: min(920px, 92vw); height: min(700px, 88vh); border-radius: 28px; border: 1px solid rgba(244, 157, 55, .18); box-shadow: 0 40px 120px -30px rgba(0, 0, 0, .8); }
+  .twin-build-card { width: min(920px, 92vw); height: min(700px, 88vh); border-radius: 28px; border: 1px solid rgba(61, 90, 254, .18); box-shadow: 0 40px 120px -30px rgba(0, 0, 0, .8); }
 }
 
 .twin-build-stage { position: absolute; inset: 0; }
@@ -28,13 +28,13 @@
   .twin-build-ready h2 { font-size: 34px; }
   .twin-build-actions { flex-direction: row; justify-content: center; max-width: none; }
 }
-.twin-build-primary { display: inline-flex; align-items: center; justify-content: center; padding: 14px 24px; border-radius: 999px; background: var(--tb-warm); color: var(--tb-bg); font-weight: 600; font-size: 15px; text-decoration: none; transition: transform .15s; }
+.twin-build-primary { display: inline-flex; align-items: center; justify-content: center; padding: 14px 24px; border-radius: 999px; background: var(--tb-warm); color: #fff; font-weight: 600; font-size: 15px; text-decoration: none; transition: transform .15s; }
 .twin-build-primary:hover { transform: translateY(-1px); }
 .twin-build button.twin-build-close { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .28); }
 
 /* Reduced motion: a still figure with the sources listed, each fading in. */
 .twin-build-list { position: absolute; top: 20px; left: 16px; right: 16px; z-index: 2; margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-.twin-build-list li { padding: 4px 10px; border-radius: 999px; font-size: 12px; color: var(--tb-cream); background: rgba(22, 11, 11, .78); border: 1px solid rgba(244, 157, 55, .6); animation: tb-fade .6s var(--d, 0s) both; }
+.twin-build-list li { padding: 4px 10px; border-radius: 999px; font-size: 12px; color: var(--tb-cream); background: rgba(5, 6, 15, .78); border: 1px solid rgba(61, 90, 254, .6); animation: tb-fade .6s var(--d, 0s) both; }
 
 @keyframes tb-in { from { opacity: 0; } }
 @keyframes tb-fade { from { opacity: 0; } }
