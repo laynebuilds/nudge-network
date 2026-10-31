@@ -6,6 +6,7 @@ import StartForm from "./start-form";
 import Story from "./landing/story";
 import Hero from "./landing/hero";
 import Reveal from "./landing/reveal";
+import Inbox from "./landing/inbox";
 
 export const dynamic = "force-dynamic";
 
@@ -90,6 +91,15 @@ function Landing() {
       </section>
 
       <Story />
+
+      <section className="sec wrap" id="inbox">
+        <span className="eyebrow rv">Your twin&apos;s inbox</span>
+        <h2 className="rv">One twin. Every conversation at once.</h2>
+        <p className="lead rv">It talks to dozens of founders&apos; twins in parallel, and only pings you when there&apos;s a decision to make.</p>
+        <div className="rv">
+          <Inbox />
+        </div>
+      </section>
 
       <section className="sec wrap" id="for">
         <span className="eyebrow rv">What it&apos;s for</span>
