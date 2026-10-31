@@ -36,11 +36,15 @@ export default function MePage() {
   return (
     <>
       <Profile founder={founder} phone={phone} />
-      <About reload={load} />
-      <Bookmark />
-      <Social reload={load} />
-      <Connect reload={load} />
-      <History founder={founder} editable={editable} reload={load} />
+      <Links reload={load} />
+      <Photos reload={load} />
+      <details className="card more">
+        <summary>More ways to teach your twin (optional)</summary>
+        <About reload={load} />
+        <Bookmark />
+        <Connect reload={load} />
+        <History founder={founder} editable={editable} reload={load} />
+      </details>
       <Sealed />
     </>
   );
@@ -179,8 +183,8 @@ function Sealed() {
 
   if (!sealed) return null;
   return (
-    <section className="card">
-      <h2>Sealed intent</h2>
+    <details className="card more">
+      <summary>Answer key for the scorecard (private, 2 minutes)</summary>
       <p className="muted">
         Only you see this. No agent and not the other person ever reads it. After a run, the scorer asks your twin to predict
         these answers blind and checks the final proposal against your red lines. Answer honestly and specifically; write it
@@ -202,7 +206,7 @@ function Sealed() {
         </div>
         {msg && <p className="muted">{msg}</p>}
       </div>
-    </section>
+    </details>
   );
 }
 
@@ -376,57 +380,6 @@ function About({ reload }: { reload: () => void }) {
   );
 }
 
-const SOCIAL = [
-  { id: "linkedin", label: "LinkedIn", url: "https://www.linkedin.com/in/your-handle", paste: "Paste your headline, About section and experience (copy from your profile page)." },
-  { id: "x", label: "X", url: "https://x.com/your-handle", paste: "Paste your bio and 10 to 20 recent posts you stand behind." },
-  { id: "instagram", label: "Instagram", url: "https://www.instagram.com/your-handle", paste: "Paste your bio and captions from recent posts." },
-] as const;
-
-function Social({ reload }: { reload: () => void }) {
-  return (
-    <section className="card">
-      <h2>Social profiles</h2>
-      <p className="muted">
-        Paste your profile link: LinkedIn and X are read automatically, including your recent posts. Instagram blocks this,
-        so use the Send to my twin bookmark on your Instagram profile. The paste box is there for anything else.
-      </p>
-      {SOCIAL.map((p) => (
-        <SocialRow key={p.id} platform={p} reload={reload} />
-      ))}
-    </section>
-  );
-}
-
-function SocialRow({ platform, reload }: { platform: (typeof SOCIAL)[number]; reload: () => void }) {
-  const [url, setUrl] = useState("");
-  const [text, setText] = useState("");
-  const [msg, setMsg] = useState("");
-  async function save() {
-    setMsg("Saving...");
-    const res = await fetch("/api/me/social", {
-      method: "POST",
-      body: JSON.stringify({ platform: platform.id, url: url || undefined, text: text || undefined }),
-    });
-    const body = await res.json();
-    if (!res.ok) return setMsg(body.error);
-    const parts = [];
-    if (body.error) parts.push(`could not read that link right now; use the Send to my twin bookmark on that page instead`);
-    else if (body.public !== undefined) parts.push(body.public ? `read your public profile${body.quotes ? ` and kept ${body.quotes} of your posts word for word` : ""}` : "nothing about you found at that link");
-    if (body.pasted !== undefined) parts.push(`saved ${body.pasted} characters you pasted`);
-    setMsg(parts.join(", ") + ".");
-    reload();
-  }
-  return (
-    <div className="form social">
-      <h3>{platform.label}</h3>
-      <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={platform.url} />
-      <textarea rows={4} value={text} onChange={(e) => setText(e.target.value)} placeholder={platform.paste} />
-      <div className="row"><button onClick={save} disabled={!url && !text}>Save {platform.label}</button></div>
-      {msg && <p className="muted">{msg}</p>}
-    </div>
-  );
-}
-
 // Runs in the owner's own logged-in tab. It opens our capture page and hands it the page text by window
 // message, because LinkedIn, X and Instagram block scripts from calling other domains directly.
 const BOOKMARK = (origin: string) =>
@@ -454,6 +407,76 @@ function Bookmark() {
         <li>Do the same on your LinkedIn activity page, your X profile scrolled through your recent posts, and your Instagram profile.</li>
       </ol>
       <p className="muted">Only what the page says about you is kept, plus your own posts and captions word for word.</p>
+    </section>
+  );
+}
+
+function Links({ reload }: { reload: () => void }) {
+  const [links, setLinks] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [results, setResults] = useState<{ url: string; label: string; ok: boolean; note: string }[]>([]);
+  async function connect() {
+    setBusy(true);
+    const res = await fetch("/api/me/links", { method: "POST", body: JSON.stringify({ links }) });
+    const body = await res.json();
+    setBusy(false);
+    if (!res.ok) return setResults([{ url: "", label: "", ok: false, note: body.error }]);
+    setResults(body.results);
+    reload();
+  }
+  return (
+    <section className="card">
+      <h2>Your links</h2>
+      <p className="muted">Paste your LinkedIn, X, Instagram and website links, all at once. Your twin reads your profiles and recent posts.</p>
+      <div className="form">
+        <textarea rows={3} value={links} onChange={(e) => setLinks(e.target.value)} placeholder={"https://www.linkedin.com/in/...\nhttps://x.com/...\nhttps://www.instagram.com/..."} />
+        <div className="row"><button onClick={connect} disabled={busy || !links.trim()}>{busy ? "Reading your links..." : "Connect"}</button></div>
+        {results.length > 0 && (
+          <ul className="link-results">
+            {results.map((r, i) => (
+              <li key={i} className={r.ok ? "ok" : "bad"}>{r.label ? `${r.label}: ` : ""}{r.note}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function Photos({ reload }: { reload: () => void }) {
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function photos(files: FileList) {
+    setBusy(true);
+    const list = [...files].slice(0, 120);
+    let added = 0;
+    for (let i = 0; i < list.length; i += 6) {
+      setMsg(`Reading photos ${i + 1} to ${Math.min(i + 6, list.length)} of ${list.length}...`);
+      const batch = await Promise.all(
+        list.slice(i, i + 6).map(async (f) => ({ name: f.name, data: await toJpeg(f), ts: new Date(f.lastModified).toISOString().slice(0, 10) }))
+      ).catch(() => null);
+      if (!batch) continue;
+      const res = await fetch("/api/me/photos", { method: "POST", body: JSON.stringify({ images: batch }) });
+      const body = await res.json();
+      if (!res.ok) {
+        setMsg(body.error);
+        break;
+      }
+      added += body.added;
+    }
+    setMsg(`${added} photos added to your twin. The images were not stored.`);
+    setBusy(false);
+    reload();
+  }
+  return (
+    <section className="card">
+      <h2>Your photos</h2>
+      <p className="muted">Pick 20 to 40 photos of your life and work. Only short notes about them are kept.</p>
+      <label className="file">
+        {busy ? "Working..." : "Choose photos"}
+        <input type="file" accept="image/*" multiple disabled={busy} onChange={(e) => e.target.files?.length && photos(e.target.files)} />
+      </label>
+      {msg && <p className="muted">{msg}</p>}
     </section>
   );
 }
