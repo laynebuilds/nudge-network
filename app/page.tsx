@@ -93,9 +93,8 @@ function Landing() {
       <Story />
 
       <section className="sec wrap" id="inbox">
-        <span className="eyebrow rv">Your twin&apos;s inbox</span>
-        <h2 className="rv">One twin. Every conversation at once.</h2>
-        <p className="lead rv">It talks to dozens of founders&apos; twins in parallel, and only pings you when there&apos;s a decision to make.</p>
+        <h2 className="rv">Your twin&apos;s inbox.</h2>
+        <p className="lead rv">It talks to other founders&apos; twins in parallel. You only hear about it when there&apos;s a decision.</p>
         <div className="rv">
           <Inbox />
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // "Your twin's inbox": your twin (Jonah's, from the demo pair) running several twin-to-twin threads at once.
 // Lines play out over time, so live threads keep moving while you watch.
@@ -11,8 +11,8 @@ type Line =
 type Thread = {
   id: string;
   name: string;
-  tone: string;
   tag: string;
+  time: string;
   status: "needs" | "live" | "booked" | "passed";
   lines: Line[];
 };
@@ -21,31 +21,31 @@ const THREADS: Thread[] = [
   {
     id: "maya",
     name: "Maya",
-    tone: "t1",
+    time: "now",
     tag: "Cofounder",
     status: "needs",
     lines: [
       { kind: "them", text: "maya needs a commercial cofounder, full time by mid january. is jonah?" },
-      { kind: "act", text: "Read Jonah's texts about his notice period" },
+      { kind: "act", text: "Read texts about notice period" },
       { kind: "you", text: "his cliff at his job is 14 feb, but he'd leave early for the right thing" },
       { kind: "them", text: "she won't build on crypto rails. dealbreaker?" },
       { kind: "you", text: "no. he was curious about stablecoins, not committed. fiat works" },
       { kind: "them", text: "she'd rather build than run the board. CEO is his if he wants it" },
-      { kind: "act", text: "Held a red line: Sundays stay off" },
-      { kind: "act", text: "Checked Jonah's calendar: Thursday 2pm is free" },
-      { kind: "result", title: "Ready for you", terms: ["Jonah CEO, Maya CTO", "55/45, starting 15 January", "Meet Thursday 2pm, Shoreditch"] },
+      { kind: "act", text: "Kept Sundays off" },
+      { kind: "act", text: "Checked calendar, Thursday 2pm is free" },
+      { kind: "result", title: "Proposal", terms: ["Roles|Jonah CEO, Maya CTO", "Equity|55 / 45", "Start|15 January", "Meet|Thursday 2pm, Shoreditch"] },
     ],
   },
   {
     id: "ifeoma",
     name: "Ifeoma",
-    tone: "t5",
+    time: "2m",
     tag: "Angel",
     status: "live",
     lines: [
       { kind: "you", text: "jonah's closing a technical cofounder this week. ifeoma mentioned a check" },
       { kind: "them", text: "she'll write $25k the day that cofounder is full time" },
-      { kind: "act", text: "Linked this thread to the Maya conversation" },
+      { kind: "act", text: "Linked to the Maya thread" },
       { kind: "you", text: "if thursday goes well that's mid january. can we hold a call for the 16th?" },
       { kind: "them", text: "holding it. she'll want to meet the cofounder too" },
     ],
@@ -53,12 +53,12 @@ const THREADS: Thread[] = [
   {
     id: "kai",
     name: "Kai",
-    tone: "t2",
+    time: "1h",
     tag: "First hire",
     status: "booked",
     lines: [
       { kind: "them", text: "kai's a product engineer, shipped payments at two startups. wants equity over salary" },
-      { kind: "act", text: "Checked Jonah's calendar: evenings after 6:30 only" },
+      { kind: "act", text: "Checked calendar, evenings only" },
       { kind: "you", text: "jonah's still at his day job. tuesday 6:30pm work?" },
       { kind: "them", text: "booked" },
     ],
@@ -66,19 +66,19 @@ const THREADS: Thread[] = [
   {
     id: "theo",
     name: "Theo",
-    tone: "t3",
+    time: "3h",
     tag: "Cofounder",
     status: "passed",
     lines: [
       { kind: "them", text: "theo wants to be CEO and move to SF in the spring" },
-      { kind: "act", text: "Read Jonah's notes: CEO, staying in London this year" },
+      { kind: "act", text: "Read notes on role and location" },
       { kind: "you", text: "two CEOs in two cities. not a fit, but thanks" },
     ],
   },
   {
     id: "sasha",
     name: "Sasha",
-    tone: "t6",
+    time: "6m",
     tag: "Advisor",
     status: "live",
     lines: [
@@ -89,7 +89,7 @@ const THREADS: Thread[] = [
   },
 ];
 
-const STATUS = { needs: "Needs you", live: "Live", booked: "Booked", passed: "Passed" } as const;
+const STATUS = { needs: "Needs you", live: "Talking", booked: "Booked", passed: "Passed" } as const;
 
 export default function Inbox() {
   const [sel, setSel] = useState(0);
@@ -119,18 +119,20 @@ export default function Inbox() {
 
   const th = THREADS[sel];
   const n = shownCount(sel);
+  const body = useRef<HTMLDivElement>(null);
+  // Keep the newest line in view, like a real chat.
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      const el = body.current;
+      if (el) el.scrollTop = el.scrollHeight;
+    });
+    return () => cancelAnimationFrame(id);
+  }, [n, sel, decided]);
   const typing = n < th.lines.length && th.lines[n].kind !== "act" && th.lines[n].kind !== "result" ? th.lines[n].kind : null;
 
   return (
     <div className="inbox">
       <aside className="ib-list">
-        <div className="ib-top">
-          <b>Your twin</b>
-          <span>
-            <i className="dot" />
-            5 conversations
-          </span>
-        </div>
         {THREADS.map((t, i) => {
           const k = shownCount(i);
           const last = [...t.lines.slice(0, k)].reverse().find((l) => l.kind === "them" || l.kind === "you") as
@@ -146,17 +148,13 @@ export default function Inbox() {
                 setSel(i);
               }}
             >
-              <span className={`face ${t.tone}`}>{t.name[0]}</span>
-              <span className="ib-mid">
-                <span className="ib-row">
-                  <b>{t.name}&apos;s twin</b>
-                  <span className={`chip ${t.status}`}>{STATUS[t.status]}</span>
-                </span>
+              <span className="ib-row">
+                <i className={`st ${t.status}`} />
+                <b>{t.name}</b>
                 <span className="ib-tag">{t.tag}</span>
-                <span className="ib-snip">
-                  {isTyping ? <em>typing</em> : last ? (last.kind === "you" ? "You: " : "") + last.text : "starting"}
-                </span>
+                <span className="ib-time">{t.time}</span>
               </span>
+              <span className="ib-snip">{isTyping ? "typing..." : last ? (last.kind === "you" ? "You: " : "") + last.text : ""}</span>
             </button>
           );
         })}
@@ -164,39 +162,38 @@ export default function Inbox() {
 
       <section className="ib-pane" key={th.id}>
         <div className="ib-head">
-          <span className="pair">
-            <span className="face me sm">J</span>
-            <span className={`face ${th.tone} sm`}>{th.name[0]}</span>
-          </span>
-          <span>
-            <b>Your twin and {th.name}&apos;s twin</b>
-            <small>{th.tag}</small>
-          </span>
-          <span className={`chip ${th.status}`}>{STATUS[th.status]}</span>
+          <b>{th.name}&apos;s twin</b>
+          <span className="ib-tag">{th.tag}</span>
+          <span className={`ib-state ${th.status}`}>{STATUS[th.status]}</span>
         </div>
-        <div className="ib-body">
+        <div className="ib-body" ref={body}>
           {th.lines.slice(0, n).map((l, i) =>
             l.kind === "act" ? (
               <div key={i} className="ib-act">
-                <i />
                 {l.text}
               </div>
             ) : l.kind === "result" ? (
               <div key={i} className="ib-result">
-                <span className="r-label">{l.title}</span>
-                <ul>
-                  {l.terms.map((x) => (
-                    <li key={x}>{x}</li>
-                  ))}
-                </ul>
+                <div className="ib-r-title">{l.title}</div>
+                <dl>
+                  {l.terms.map((x) => {
+                    const [k, v] = x.split("|");
+                    return (
+                      <div key={k}>
+                        <dt>{k}</dt>
+                        <dd>{v}</dd>
+                      </div>
+                    );
+                  })}
+                </dl>
                 {decided ? (
-                  <span className="r-done">{decided}</span>
+                  <p className="r-done">{decided}</p>
                 ) : (
-                  <span className="r-btns">
-                    <button onClick={() => setDecided("You said yes. Maya's twin is telling her now.")}>Accept</button>
-                    <button className="secondary" onClick={() => setDecided("Sent back to your twin with your changes.")}>Modify</button>
-                    <button className="secondary" onClick={() => setDecided("Passed. Maya won't hear a thing.")}>Pass</button>
-                  </span>
+                  <div className="r-btns">
+                    <button onClick={() => setDecided("Accepted. Maya's twin is telling her now.")}>Accept</button>
+                    <button className="secondary" onClick={() => setDecided("Sent back to your twin with changes.")}>Modify</button>
+                    <button className="text" onClick={() => setDecided("Passed. Maya won't hear a thing.")}>Pass</button>
+                  </div>
                 )}
               </div>
             ) : (
