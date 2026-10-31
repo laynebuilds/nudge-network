@@ -52,8 +52,14 @@ function chipLabels(items: Founder["items"], links: Partial<Record<LinkField, st
   if (messages) head.push(`${messages} message${messages === 1 ? "" : "s"}`);
   for (const s of new Set(items.map((i) => i.source))) if (SOURCE_NAMES[s] && !head.includes(SOURCE_NAMES[s])) head.push(SOURCE_NAMES[s]);
 
+  // Snippets only come from what the person published or wrote about themselves (posts, pages, answers,
+  // photo notes). Private conversations show up only as counts, never their words, and phone numbers or
+  // email addresses are stripped from everything shown.
+  const PRIVATE = new Set(["imessage", "whatsapp", "email"]);
+  const scrub = (t: string) => t.replace(/\+?\d[\d\s().-]{6,}\d/g, "").replace(/\S+@\S+\.\S+/g, "").replace(/^[\s:,-]+/, "");
   const snippets = items
-    .map((i, n) => ({ n, label: firstWords(i.caption ?? i.text ?? i.title ?? i.subject ?? "", 3 + (n % 3)) }))
+    .filter((i) => !PRIVATE.has(i.source))
+    .map((i, n) => ({ n, label: firstWords(scrub(i.caption ?? i.text ?? i.title ?? i.subject ?? ""), 3 + (n % 3)) }))
     .filter((x) => x.label)
     // Spread across the history instead of always taking the oldest items.
     .sort((a, b) => ((a.n * 7919) % 97) - ((b.n * 7919) % 97))
