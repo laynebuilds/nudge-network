@@ -35,6 +35,10 @@ export default function MePage() {
 
   return (
     <>
+      <div className="page-head">
+        <h1>Your twin</h1>
+        <p className="lede">Your twin knows only what is on this page. Other twins never see your history, only what your twin chooses to say.</p>
+      </div>
       <Profile founder={founder} phone={phone} />
       <Connect reload={load} />
       <History founder={founder} editable={editable} reload={load} />
@@ -138,7 +142,7 @@ function History({ founder, editable, reload }: { founder: Founder; editable: st
         {[...founder.items].reverse().map((i) => (
           <li key={i.id}>
             <div className="who">
-              {i.source} {i.ts} {i.with && `with ${i.with}`} {i.title ?? i.subject}
+              <span className="src">{i.source}</span> {i.ts} {i.with && `with ${i.with}`} {i.title ?? i.subject}
               {own.has(i.id) ? <button className="link" onClick={() => remove(i.id)}>remove</button> : <span className="pill">public seed</span>}
             </div>
             <p>{(i.caption ?? i.text ?? "").slice(0, 400)}</p>
