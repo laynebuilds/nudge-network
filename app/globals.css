@@ -438,3 +438,19 @@ details.more > .card { border: none; padding: 16px 0 0; margin: 0; }
   .nav .r { gap: 4px; }
   .nav .r button { padding: 8px 12px; font-size: 13px; white-space: nowrap; }
 }
+
+/* iMessage view: live research steps, found facts, bubbles popping in, composing state. */
+.research { display: grid; gap: 2px; margin: 8px 0; }
+.sys.step { opacity: 0.55; margin: 4px 8px; }
+.sys.step.live { opacity: 1; }
+.dots { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; }
+.dots i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; animation: blink 1.2s infinite; }
+.dots i:nth-child(2) { animation-delay: 0.2s; }
+.dots i:nth-child(3) { animation-delay: 0.4s; }
+.found { align-self: center; max-width: 92%; margin: 8px 0 12px; padding: 10px 12px; border-radius: 14px; background: rgba(128, 128, 128, 0.14); font-size: 12px; }
+.found-title { margin: 0 0 6px; font-weight: 600; color: #8e8e93; text-align: center; }
+.found-fact { margin: 4px 0; line-height: 1.35; }
+.bubble-i.pop { animation: pop 0.28s ease-out both; }
+@keyframes pop { from { opacity: 0; transform: translateY(6px) scale(0.96); } to { opacity: 1; transform: none; } }
+.composing { color: #0a84ff !important; border-color: rgba(10, 132, 255, 0.5) !important; }
+@media (prefers-reduced-motion: reduce) { .bubble-i.pop, .dots i { animation: none; } }

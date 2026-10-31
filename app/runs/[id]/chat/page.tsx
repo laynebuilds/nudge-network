@@ -67,6 +67,28 @@ function Phone({ run, side, hiddenOnPhone }: { run: RunView; side: "a" | "b"; hi
     end.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [run.transcript.length, run.stage]);
 
+  // A new message shows "Delivered" for a moment, then "Read" once the other twin is on it.
+  const [fresh, setFresh] = useState(false);
+  const seen = useRef(run.transcript.length);
+  useEffect(() => {
+    if (run.transcript.length === seen.current) return;
+    seen.current = run.transcript.length;
+    setFresh(true);
+    const t = setTimeout(() => setFresh(false), 2500);
+    return () => clearTimeout(t);
+  }, [run.transcript.length]);
+
+  // While researching nothing has been said yet, so show what the twin is doing step by step.
+  const RESEARCH = [`Searching the web for ${other.name}`, "Reading their public profiles", `Looking for what ${other.name.split(" ")[0]} and ${me.name.split(" ")[0]} have in common`];
+  const [researchStep, setResearchStep] = useState(0);
+  useEffect(() => {
+    if (run.stage !== "researching") return;
+    const t = setInterval(() => setResearchStep((n) => Math.min(n + 1, RESEARCH.length - 1)), 9000);
+    return () => clearInterval(t);
+  }, [run.stage, RESEARCH.length]);
+  const dossier = run.dossiers?.[side === "a" ? "b" : "a"];
+  const lastIndex = run.transcript.length - 1;
+
   return (
     <section className={`phone${hiddenOnPhone ? " off-phone" : ""}`} aria-label={`${me.name}'s twin`}>
       <header className="phone-head">
@@ -75,11 +97,23 @@ function Phone({ run, side, hiddenOnPhone }: { run: RunView; side: "a" | "b"; hi
         <span className="phone-sub">seen by {me.name}&apos;s twin</span>
       </header>
       <div className="thread">
-        {run.stage === "researching" && <p className="sys">Researching {other.name} on the web...</p>}
-        {run.dossiers && (
-          <p className="sys">
-            Read {run.dossiers[side === "a" ? "b" : "a"].facts.length} public facts about {other.name} before the chat
-          </p>
+        {run.stage === "researching" && (
+          <div className="research">
+            {RESEARCH.slice(0, researchStep + 1).map((line, i) => (
+              <p key={line} className={`sys step${i === researchStep ? " live" : ""}`}>
+                {line}
+                {i === researchStep && <span className="dots" aria-hidden><i /><i /><i /></span>}
+              </p>
+            ))}
+          </div>
+        )}
+        {dossier && dossier.facts.length > 0 && (
+          <div className="found">
+            <p className="found-title">Before the chat: {dossier.facts.length} things found about {other.name.split(" ")[0]}</p>
+            {dossier.facts.slice(0, 3).map((f, i) => (
+              <p key={i} className="found-fact">{f.fact}</p>
+            ))}
+          </div>
         )}
         {run.transcript.map((e, i) => {
           const mine = e.side === side;
@@ -91,7 +125,7 @@ function Phone({ run, side, hiddenOnPhone }: { run: RunView; side: "a" | "b"; hi
                 .map((line) => line.trim())
                 .filter(Boolean)
                 .map((line, j) => (
-                  <div key={j} className="bubble-i">
+                  <div key={j} className="bubble-i pop" style={{ animationDelay: `${j * 0.7}s` }}>
                     {line}
                   </div>
                 ))}
@@ -103,6 +137,7 @@ function Phone({ run, side, hiddenOnPhone }: { run: RunView; side: "a" | "b"; hi
                 </details>
               )}
               {mine && e.turn.status !== "continue" && <span className="receipt">{e.turn.status === "ready" ? "Ready to propose" : "Walked away"}</span>}
+              {mine && i === lastIndex && <span className="receipt">{fresh && run.stage === "negotiating" ? "Delivered" : "Read"}</span>}
             </div>
           );
         })}
@@ -115,7 +150,6 @@ function Phone({ run, side, hiddenOnPhone }: { run: RunView; side: "a" | "b"; hi
             </div>
           </div>
         )}
-        {thinking && <p className="sys">Thinking with {me.name}&apos;s history...</p>}
         {(run.stage === "mediating" || run.stage === "ratifying" || run.stage === "scoring") && (
           <p className="sys">{run.stage === "mediating" ? "Mediator is writing the proposal..." : run.stage === "ratifying" ? "Checking the proposal against " + me.name + "..." : "Scoring..."}</p>
         )}
@@ -131,7 +165,13 @@ function Phone({ run, side, hiddenOnPhone }: { run: RunView; side: "a" | "b"; hi
         <div ref={end} />
       </div>
       <footer className="phone-foot">
-        <span>iMessage</span>
+        {thinking ? (
+          <span className="composing">
+            {me.name.split(" ")[0]}&apos;s twin is writing<span className="dots" aria-hidden><i /><i /><i /></span>
+          </span>
+        ) : (
+          <span>iMessage</span>
+        )}
       </footer>
     </section>
   );
