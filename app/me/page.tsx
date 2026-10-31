@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { Founder, SealedIntent } from "../../lib/schemas";
 import { api, useAutosave, type SaveState } from "../../lib/client";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { LINK_FIELDS, LINK_META, linkError, normalizeLink, type LinkField, type LinkRead, type Links } from "../../lib/links";
 
 const SOURCES = ["note", "imessage", "whatsapp", "email", "calendar", "photo", "doc"] as const;
@@ -150,10 +152,10 @@ function History({ founder, editable, reload }: { founder: Founder; editable: st
               {SOURCES.map((s) => <option key={s}>{s}</option>)}
             </select>
           </label>
-          <label>With (optional)<input value={withWho} onChange={(e) => setWithWho(e.target.value)} placeholder="Who it was with" /></label>
+          <Input label="With (optional)" value={withWho} onChange={(e) => setWithWho(e.target.value)} placeholder="Who it was with" />
         </div>
-        <label>Title (optional)<input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
-        <label>Text<textarea rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder="Paste a message thread, a note, a photo description..." /></label>
+        <Input label="Title (optional)" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <Textarea label="Text" rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder="Paste a message thread, a note, a photo description..." />
         <div className="row">
           <button onClick={add} disabled={busy || !text.trim()}>{busy ? "Adding..." : "Add to history"}</button>
           <label className="file">
@@ -222,13 +224,26 @@ function Sealed() {
         before you look at any run.
       </p>
       <div className="form">
-        <label>Red lines (one per line)
-          <textarea rows={4} value={redLines} onChange={(e) => setRedLines(e.target.value)} placeholder="Things you will not do or accept, whatever the upside" />
-        </label>
+        <Textarea
+          label="Red lines (one per line)"
+          rows={4}
+          value={redLines}
+          onChange={(e) => setRedLines(e.target.value)}
+          placeholder="Things you will not do or accept, whatever the upside"
+        />
         {probes.map((p, i) => (
           <div key={i} className="probe">
-            <input value={p.question} onChange={(e) => setProbes(probes.map((x, j) => (j === i ? { ...x, question: e.target.value } : x)))} />
-            <input value={p.answer} placeholder="Your real answer" onChange={(e) => setProbes(probes.map((x, j) => (j === i ? { ...x, answer: e.target.value } : x)))} />
+            <Input
+              aria-label={`Probe ${i + 1} question`}
+              value={p.question}
+              onChange={(e) => setProbes(probes.map((x, j) => (j === i ? { ...x, question: e.target.value } : x)))}
+            />
+            <Input
+              aria-label={`Probe ${i + 1} answer`}
+              value={p.answer}
+              placeholder="Your real answer"
+              onChange={(e) => setProbes(probes.map((x, j) => (j === i ? { ...x, answer: e.target.value } : x)))}
+            />
           </div>
         ))}
         <div className="row">
@@ -316,8 +331,8 @@ function Connect({ founderId, reload }: { founderId: string; reload: () => void 
         matter most (cofounders, family, close friends, investors).
       </p>
       <div className="pair">
-        <label>Chat name<input value={chat} onChange={(e) => setChat(e.target.value)} placeholder="From the file name if empty" /></label>
-        <label>Your name in that chat<input value={myName} onChange={(e) => setMyName(e.target.value)} placeholder="As WhatsApp shows it" /></label>
+        <Input label="Chat name" value={chat} onChange={(e) => setChat(e.target.value)} placeholder="From the file name if empty" />
+        <Input label="Your name in that chat" value={myName} onChange={(e) => setMyName(e.target.value)} placeholder="As WhatsApp shows it" />
       </div>
       <label className="file">
         {waBusy ? "Working..." : "Upload WhatsApp export"}
@@ -327,8 +342,8 @@ function Connect({ founderId, reload }: { founderId: string; reload: () => void 
 
       <h3>Your pages on the web</h3>
       <p className="muted">Your site, product pages, a post you wrote. Read with Firecrawl.</p>
-      <div className="row">
-        <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." />
+      <div className="row url-row">
+        <Input aria-label="Page address" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." />
         <button onClick={addPage} disabled={webBusy || !url.trim()}>{webBusy ? "Reading..." : "Add page"}</button>
       </div>
       {webMsg && <p className="muted">{webMsg}</p>}
@@ -376,10 +391,13 @@ function About({ reload }: { reload: () => void }) {
       </p>
       <div className="form">
         {qs.map((q, i) => (
-          <label key={i}>
-            {i + 1}. {q.question}
-            <textarea rows={3} value={q.answer} onChange={(e) => setQs(qs.map((x, j) => (j === i ? { ...x, answer: e.target.value } : x)))} />
-          </label>
+          <Textarea
+            key={i}
+            label={`${i + 1}. ${q.question}`}
+            rows={3}
+            value={q.answer}
+            onChange={(e) => setQs(qs.map((x, j) => (j === i ? { ...x, answer: e.target.value } : x)))}
+          />
         ))}
         {autosave.state === "error" ? <SaveError error={autosave.error} retry={autosave.retry} /> : msg && <p className="muted">{msg}</p>}
       </div>
@@ -580,46 +598,50 @@ function ProfileForm({
         scorecard can show how much your history adds.
       </p>
       <div className="form profile-form">
-        <label>
-          <span>Name <span className="req">*</span></span>
-          <input value={form.name} onChange={(e) => set("name", (f) => ({ ...f, name: e.target.value }))} aria-invalid={!!show("name")} />
-          {show("name") && <small className="field-note bad">{show("name")}</small>}
-        </label>
-        <label>
-          <span>Short bio <span className="req">*</span></span>
-          <textarea
-            rows={2}
-            value={form.public_bio}
-            placeholder="One or two lines: what you do and what you are looking for"
-            onChange={(e) => set("public_bio", (f) => ({ ...f, public_bio: e.target.value }))}
-            aria-invalid={!!show("public_bio")}
-          />
-          {show("public_bio") && <small className="field-note bad">{show("public_bio")}</small>}
-        </label>
-        <label>
-          <span>iMessage number <span className="muted">(optional, for opportunity texts)</span></span>
-          <input type="tel" value={form.phone} placeholder="+1 415 555 0100" onChange={(e) => set("phone", (f) => ({ ...f, phone: e.target.value }))} />
-        </label>
+        <Input
+          label={<>Name <span className="req">*</span></>}
+          required
+          value={form.name}
+          onChange={(e) => set("name", (f) => ({ ...f, name: e.target.value }))}
+          invalid={!!show("name")}
+          errorMessage={show("name")}
+        />
+        <Textarea
+          label={<>Short bio <span className="req">*</span></>}
+          required
+          rows={2}
+          value={form.public_bio}
+          placeholder="One or two lines: what you do and what you are looking for"
+          onChange={(e) => set("public_bio", (f) => ({ ...f, public_bio: e.target.value }))}
+          invalid={!!show("public_bio")}
+          errorMessage={show("public_bio")}
+        />
+        <Input
+          label={<>iMessage number <span className="muted">(optional, for opportunity texts)</span></>}
+          type="tel"
+          value={form.phone}
+          placeholder="+1 415 555 0100"
+          onChange={(e) => set("phone", (f) => ({ ...f, phone: e.target.value }))}
+        />
         {LINK_FIELDS.map((field) => {
           const meta = LINK_META[field];
           const err = show(field);
           const read = reads[field];
           return (
-            <label key={field}>
-              <span>
-                {meta.label} {meta.required ? <span className="req">*</span> : <span className="muted">(optional)</span>}
-              </span>
-              <input
+            <div key={field} className="field-stack">
+              <Input
+                label={<>{meta.label} {meta.required ? <span className="req">*</span> : <span className="muted">(optional)</span>}</>}
+                required={meta.required}
                 type="url"
                 inputMode="url"
                 value={form.links[field]}
                 placeholder={meta.placeholder}
                 onChange={(e) => set(field, (f) => ({ ...f, links: { ...f.links, [field]: e.target.value } }))}
-                aria-invalid={!!err}
+                invalid={!!err}
+                errorMessage={err}
               />
-              {err ? (
-                <small className="field-note bad">{err}</small>
-              ) : read ? (
+              {/* The link read result is not an error, so it stays outside the field's own error slot. */}
+              {!err && read ? (
                 <small className={`field-note ${read.reading ? "" : read.ok ? "ok" : "bad"}`}>
                   {readText(read)}
                   {!read.reading && !read.ok && (
@@ -630,7 +652,7 @@ function ProfileForm({
                   )}
                 </small>
               ) : null}
-            </label>
+            </div>
           );
         })}
         {autosave.state === "error" && <SaveError error={autosave.error} retry={autosave.retry} />}

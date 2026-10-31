@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "../lib/client";
+import { Textarea } from "@/components/ui/textarea";
 
 type F = { id: string; name: string; demo: boolean };
 
@@ -53,10 +54,7 @@ export default function StartForm({
         <label>Twin A {pick(a, setA)}</label>
         <label>Twin B {pick(b, setB)}</label>
       </div>
-      <label>
-        Goal
-        <textarea rows={3} value={goal} onChange={(e) => setGoal(e.target.value)} />
-      </label>
+      <Textarea label="Goal" rows={3} value={goal} onChange={(e) => setGoal(e.target.value)} />
       {error && <p className="error">{error}</p>}
       {a === b && <p className="muted">Pick two different people.</p>}
       <button onClick={start} disabled={busy || a === b || !goal.trim()}>

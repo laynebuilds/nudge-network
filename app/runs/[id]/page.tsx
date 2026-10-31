@@ -3,6 +3,7 @@
 import { use, useState } from "react";
 import type { RunView } from "../../../lib/runs";
 import { api, useRun } from "../../../lib/client";
+import { Textarea } from "@/components/ui/textarea";
 
 const STAGES = ["researching", "negotiating", "mediating", "ratifying", "scoring", "done"];
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -274,7 +275,13 @@ function DecisionBox({
         <button onClick={() => decide("accept")} disabled={!!busy}>{busy === "accept" ? "Saving..." : "Yes, go ahead"}</button>
         <button className="danger" onClick={() => decide("reject")} disabled={!!busy}>{busy === "reject" ? "Saving..." : "Pass"}</button>
       </div>
-      <textarea rows={2} placeholder="Or say what you would change, then press Suggest a change" value={note} onChange={(e) => setNote(e.target.value)} />
+      <Textarea
+        aria-label="What you would change"
+        rows={2}
+        placeholder="Or say what you would change, then press Suggest a change"
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+      />
       <div className="row">
         <button className="secondary" onClick={() => decide("modify")} disabled={!!busy}>{busy === "modify" ? "Saving..." : "Suggest a change"}</button>
       </div>

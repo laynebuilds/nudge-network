@@ -1,0 +1,12 @@
+/* Sketch fields: stop iOS focus zoom on phones by keeping text at 16px or more. */
+@media (max-width: 600px) {
+  .doodle-rough-svg ~ input,
+  .doodle-rough-svg ~ textarea {
+    font-size: 16px !important;
+  }
+}
+.doodle-rough-svg ~ input::placeholder,
+.doodle-rough-svg ~ textarea::placeholder {
+  color: currentColor;
+  opacity: 0.45;
+}

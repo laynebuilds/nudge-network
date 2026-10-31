@@ -4,8 +4,18 @@
   font-weight: 600;
 }
 
-.profile-form label > span:first-child {
-  display: block;
+/* Sketch box fields: a link field plus its read note below, and grid cells that may shrink on phone. */
+.field-stack {
+  display: grid;
+}
+.pair > *,
+.probe > *,
+.field-stack > * {
+  min-width: 0;
+}
+.url-row > :first-child {
+  flex: 1 1 240px;
+  min-width: 0;
 }
 
 .field-note {
