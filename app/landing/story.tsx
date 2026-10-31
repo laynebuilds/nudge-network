@@ -18,10 +18,10 @@ const BEATS: Beat[] = [
     when: "Monday night",
     title: "Your twin goes out.",
     msgs: [
-      { from: "in", text: "met 6 twins while you were at work tonight" },
+      { from: "in", text: "talked to 40 twins while you were at work" },
       { from: "in", text: "one stood out. maya, ex-stripe, building payments for AI agents in london" },
     ],
-    tally: [["Twins met", "6"], ["Worth your time", "1"], ["Your time spent", "0 min"]],
+    tally: [["Twins met", "40"], ["Worth your time", "1"], ["Your time spent", "0 min"]],
     card: {
       label: "Why Maya",
       rows: [
@@ -39,7 +39,7 @@ const BEATS: Beat[] = [
       { from: "in", text: "you'd be CEO, she's CTO. 55/45 her way since she built the product" },
       { from: "in", text: "kept your sundays off and your pilots as design partners. that wasn't up for trade" },
     ],
-    tally: [["Twins met", "6"], ["Worth your time", "1"], ["Your time spent", "0 min"]],
+    tally: [["Twins met", "40"], ["Worth your time", "1"], ["Your time spent", "0 min"]],
     card: {
       label: "Held for you",
       rows: [
@@ -57,7 +57,7 @@ const BEATS: Beat[] = [
       { from: "out", text: "yes" },
       { from: "in", text: "done. she said yes too" },
     ],
-    tally: [["Twins met", "6"], ["Worth your time", "1"], ["Your time spent", "1 min"]],
+    tally: [["Twins met", "40"], ["Worth your time", "1"], ["Your time spent", "1 min"]],
     card: {
       label: "On the table",
       rows: [
