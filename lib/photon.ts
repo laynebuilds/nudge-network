@@ -61,5 +61,5 @@ export function parseDecision(text: string): { decision: "accept" | "reject" | "
   if (!m) return null;
   const word = m[1].toLowerCase();
   const decision = word === "yes" ? "accept" : word === "no" ? "reject" : (word as "accept" | "reject" | "modify");
-  return { decision, note: m[2].trim() };
+  return { decision, note: m[2].trim().replace(/^\W+$/, "") };
 }
