@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useRef } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import type { RunView } from "../../../../lib/runs";
 import { useRun } from "../../../../lib/client";
 
@@ -16,6 +16,8 @@ const initials = (name: string) =>
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { run, error } = useRun(id);
+  // On a phone only one side fits; the switch is hidden on wider screens, where both phones show.
+  const [shown, setShown] = useState<"a" | "b" | null>(null);
 
   if (error)
     return (
@@ -29,9 +31,22 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   return (
     <div className="chat-page">
       <p className="muted chat-goal">{run.goal}</p>
+      <div className="phone-switch" role="tablist">
+        {(["a", "b"] as const).map((side) => (
+          <button
+            key={side}
+            role="tab"
+            aria-selected={(shown ?? run.party ?? "a") === side}
+            className={(shown ?? run.party ?? "a") === side ? "on" : ""}
+            onClick={() => setShown(side)}
+          >
+            {(side === "a" ? run.a : run.b).name.split(" ")[0]}&apos;s twin
+          </button>
+        ))}
+      </div>
       <div className="phones">
-        <Phone run={run} side="a" />
-        <Phone run={run} side="b" />
+        <Phone run={run} side="a" hiddenOnPhone={(shown ?? run.party ?? "a") !== "a"} />
+        <Phone run={run} side="b" hiddenOnPhone={(shown ?? run.party ?? "a") !== "b"} />
       </div>
       <p className="chat-links">
         <a href={`/runs/${run.id}`}>Full run, scorecard and decision</a>
@@ -40,7 +55,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   );
 }
 
-function Phone({ run, side }: { run: RunView; side: "a" | "b" }) {
+function Phone({ run, side, hiddenOnPhone }: { run: RunView; side: "a" | "b"; hiddenOnPhone: boolean }) {
   const me = side === "a" ? run.a : run.b;
   const other = side === "a" ? run.b : run.a;
   const end = useRef<HTMLDivElement>(null);
@@ -53,7 +68,7 @@ function Phone({ run, side }: { run: RunView; side: "a" | "b" }) {
   }, [run.transcript.length, run.stage]);
 
   return (
-    <section className="phone" aria-label={`${me.name}'s twin`}>
+    <section className={`phone${hiddenOnPhone ? " off-phone" : ""}`} aria-label={`${me.name}'s twin`}>
       <header className="phone-head">
         <span className="avatar">{initials(other.name)}</span>
         <b>{other.name}&apos;s twin</b>

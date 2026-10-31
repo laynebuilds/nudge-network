@@ -39,3 +39,14 @@
 [aria-invalid="true"] {
   border-color: var(--bad);
 }
+
+/* Phone only (laptop layout unchanged): one twin's screen at a time, full width, no device frame. */
+.phone-switch { display: none; }
+@media (max-width: 760px) {
+  .phone-switch { display: flex; gap: 4px; margin: 0 auto 12px; padding: 3px; border-radius: 999px; background: rgba(128, 128, 128, 0.15); width: fit-content; }
+  .phone-switch button { border: none; background: transparent; color: inherit; font: inherit; font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer; }
+  .phone-switch button.on { background: #fff; color: #000; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); }
+  .phone.off-phone { display: none; }
+  .phones .phone { max-width: none; height: calc(100dvh - 190px); border-width: 0; border-radius: 22px; box-shadow: none; }
+  .chat-goal { font-size: 12px; margin-bottom: 10px; }
+}
