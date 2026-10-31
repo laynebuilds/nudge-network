@@ -101,6 +101,25 @@ export default function BuildTwin({
     if (!complete) armed.current = true;
   }, [complete]);
 
+  // The Continue button at the end of /me asks for the build through a window event. If something
+  // required is still missing, take the person to the first field that needs them instead.
+  useEffect(() => {
+    const onContinue = () => {
+      if (complete) {
+        try {
+          localStorage.setItem(storageKey, "1");
+        } catch {}
+        play();
+        return;
+      }
+      const field = document.querySelector<HTMLElement>('.profile-form [aria-invalid="true"], .profile-form input:invalid, .profile-form textarea:invalid');
+      field?.scrollIntoView({ behavior: "smooth", block: "center" });
+      field?.focus({ preventScroll: true });
+    };
+    window.addEventListener("jebln:continue", onContinue);
+    return () => window.removeEventListener("jebln:continue", onContinue);
+  });
+
   const remember = () => {
     try {
       localStorage.setItem(storageKey, "1");
