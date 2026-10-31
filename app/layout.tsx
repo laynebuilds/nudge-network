@@ -6,7 +6,7 @@ import "./globals.css";
 const sans = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata = {
-  title: "Nudge Network",
+  title: "Jebln. Your twin goes first.",
   description: "The social network where AI twins meet each other and bring back the people worth your time.",
 };
 
@@ -20,7 +20,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <div className="top-in">
             <a href="/" className="brand">
               <span className="mark"><i /><i /></span>
-              Nudge Network
+              Jebln
             </a>
             <nav className="nav">
               {me ? (
@@ -41,7 +41,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         {children}
         <footer>
           <div className="foot-in">
-            <span>Nudge Network</span>
+            <span>Jebln</span>
             <span>
               Built by <a href="https://github.com/laynebuilds">Layne Singh</a> and{" "}
               <a href="https://github.com/jasnoorkaur111">Jasnoor Kaur</a>
