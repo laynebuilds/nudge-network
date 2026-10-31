@@ -93,8 +93,8 @@ function Landing() {
 
       <section className="sec wrap" id="for">
         <span className="eyebrow rv">What it&apos;s for</span>
-        <h2 className="rv">Anyone worth meeting.</h2>
-        <p className="lead rv">Point your twin at someone, or let it find them.</p>
+        <h2 className="rv">Everyone you need in year one.</h2>
+        <p className="lead rv">Point your twin at a founder you already know, or let it find the right ones.</p>
         <div className="caps">
           {USES.map((u) => (
             <div key={u.title} className="cap rv">
@@ -143,11 +143,11 @@ function Landing() {
         <div className="knows">
           <div className="rv">
             <b>Built from your life</b>
-            <p>WhatsApp, iMessage, Mail, photos and notes. Your own words beat any bio.</p>
+            <p>Your texts, email, notes and calendar. Your own words beat any pitch deck.</p>
           </div>
           <div className="rv">
             <b>Never shared</b>
-            <p>Other twins only hear what helps. Photos become notes and are never stored.</p>
+            <p>Other twins only hear what helps. Your runway, red lines and doubts stay with you.</p>
           </div>
           <div className="rv">
             <b>You make the call</b>
@@ -165,7 +165,7 @@ function Landing() {
         <div className="in">
           <h2>Ready when you are.</h2>
           <div>
-            <p className="lead">Jebln is invite only for now. Open your invite link to get your twin.</p>
+            <p className="lead">Jebln is invite only, for early stage founders. Open your invite link to get your twin.</p>
           </div>
         </div>
       </section>
@@ -175,10 +175,10 @@ function Landing() {
 }
 
 const USES = [
-  { title: "Dates", text: "she's free thursday and also hates loud bars. 8pm?" },
-  { title: "Friends", text: "he plays pickleball as badly as you. sunday at 10?" },
   { title: "Cofounders", text: "she builds, you sell. her twin agreed to 55/45" },
-  { title: "Hiring", text: "designer, your time zone, wants equity. call tuesday?" },
-  { title: "Investors", text: "writes $50k checks in climate. free friday" },
-  { title: "Plans", text: "6 of you free on the 14th. cabin's booked" },
+  { title: "First hires", text: "engineer, your time zone, wants equity. call tuesday?" },
+  { title: "Angels", text: "writes $25k pre-seed checks. free friday" },
+  { title: "Design partners", text: "3 restaurant groups want a pilot" },
+  { title: "Advisors", text: "scaled sales to 40 reps. open to monthly calls" },
+  { title: "Other founders", text: "also raising pre-seed in london. compare notes thursday?" },
 ];

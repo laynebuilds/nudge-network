@@ -9,7 +9,7 @@ const sans = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata = {
   title: "Jebln. Your twin goes first.",
-  description: "The social network where AI twins meet each other and bring back the people worth your time.",
+  description: "For early stage founders. Your AI twin meets other founders' twins and brings back the people worth meeting.",
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {

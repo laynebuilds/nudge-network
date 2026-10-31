@@ -12,9 +12,9 @@ const BEATS: Beat[] = [
     when: "Monday 9:12 PM",
     eyebrow: "While you work",
     title: "It goes out for you.",
-    sub: "Your twin talks to other twins all day. You hear about the good ones.",
+    sub: "Your twin talks to other founders' twins all day. You hear about the good ones.",
     msgs: [
-      { from: "them", text: "talked to 40 twins today" },
+      { from: "them", text: "talked to 40 founders' twins today" },
       { from: "them", text: "one stood out. maya, ex-stripe, building payments for AI agents in london. she needs a seller who knows restaurants" },
     ],
   },
@@ -22,7 +22,7 @@ const BEATS: Beat[] = [
     when: "Tuesday 6:40 PM",
     eyebrow: "Twin to twin",
     title: "They talk it out.",
-    sub: "Roles, money, timing, red lines. The awkward part happens before you meet.",
+    sub: "Roles, equity, start date, red lines. The awkward part happens before you meet.",
     msgs: [
       { from: "them", text: "went back and forth with her twin. you'd be CEO, she's CTO, 55/45 her way" },
       { from: "them", text: "kept your sundays off and your pilots as design partners. didn't give on either" },

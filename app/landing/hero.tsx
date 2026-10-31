@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 
 // The rotating third line and the text from your twin change together.
 const ROWS = [
-  { line: "your next date.", text: "found someone. sam, west village, also hates loud bars. thursday at 8?" },
   { line: "your cofounder.", text: "maya needs a seller and you need a builder. her twin and i already agree on roles. intro?" },
-  { line: "new friends.", text: "priya just moved here and plays pickleball as badly as you. sunday at 10?" },
-  { line: "your first hire.", text: "kai's a designer in your time zone and cares more about equity than salary. call tuesday?" },
-  { line: "your investors.", text: "marcus writes $50k checks in climate. his twin says he's free friday" },
+  { line: "your first hire.", text: "kai has shipped payments infra before and cares more about equity than salary. call tuesday?" },
+  { line: "your angels.", text: "marcus writes $25k pre-seed checks into fintech. his twin says he's free friday" },
+  { line: "your first users.", text: "3 restaurant groups want to pilot. their twins said yes to a 20 minute demo" },
+  { line: "your advisor.", text: "she scaled sales at a fintech from 2 to 40 reps. open to monthly calls" },
 ];
 
 export default function Hero() {
@@ -41,7 +41,7 @@ export default function Hero() {
           </span>
         </h1>
         <p className="what">
-          Jebln builds an AI twin from your texts and photos. It meets other twins and brings back <b>the people worth meeting.</b>
+          Jebln builds an AI twin of you, the founder. It meets other founders&apos; twins and brings back <b>the people worth meeting.</b>
         </p>
         <div className="cta">
           <a className="btn white" href="#join">Get your twin</a>
